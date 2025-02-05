@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des Tournois{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <h1>Tournois disponibles</h1>
+        <ul>
+            {% for tournoi in tournois %}
+                <li>
+                    <a href="{{ path('tournoi_show', {id: tournoi.id}) }}">{{ tournoi.nom }}</a>
+                    (Début : {{ tournoi.dateDebut|date('d/m/Y') }})
+                </li>
+            {% else %}
+                <li>Aucun tournoi disponible.</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}

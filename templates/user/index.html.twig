@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon Profil{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        {% if app.user %}
+            <h1>Bienvenue, {{ app.user.prenom ?? '' }}</h1>
+            <p>Email : {{ app.user.email }}</p>
+            <a href="{{ path('app_logout') }}" class="btn btn-danger">Se déconnecter</a>
+        {% else %}
+            <div class="alert alert-warning">Vous devez être connecté pour voir cette page.</div>
+            <a href="{{ path('app_login') }}" class="btn btn-primary">Se connecter</a>
+        {% endif %}
+    </div>
+{% endblock %}

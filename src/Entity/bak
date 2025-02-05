@@ -1,16 +1,15 @@
-<?php 
+<?php
 
 namespace App\Entity;
 
 use App\Repository\UserRepository;
-use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -18,20 +17,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 180)]
+    #[ORM\Column(length: 255)]
+    private ?string $nom = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $prenom = null;
+
+    #[ORM\Column(length: 255, unique: true)]
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $nom = null;  // ✅ Ajout du champ "nom"
-
-    #[ORM\Column(length: 255)]
-    private ?string $prenom = null;  // ✅ Ajout du champ "prenom"
+    private ?string $password = null;
 
     #[ORM\Column]
     private array $roles = [];
-
-    #[ORM\Column]
-    private ?string $password = null;
 
     /**
      * @var Collection<int, Equipe>
@@ -47,17 +46,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getEmail(): ?string
-    {
-        return $this->email;
-    }
-
-    public function setEmail(string $email): static
-    {
-        $this->email = $email;
-        return $this;
     }
 
     public function getNom(): ?string
@@ -82,25 +70,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getUserIdentifier(): string
+    public function getEmail(): ?string
     {
-        return (string) $this->email;
+        return $this->email;
     }
 
-    public function getRoles(): array
+    public function setEmail(string $email): static
     {
-        $roles = $this->roles;
-        $roles[] = 'ROLE_USER';
-
-        return array_unique($roles);
-    }
-
-    public function setRoles(array $roles): static
-    {
-        $this->roles = $roles;
+        $this->email = $email;
         return $this;
     }
 
+    /**
+     * @see PasswordAuthenticatedUserInterface
+     */
     public function getPassword(): ?string
     {
         return $this->password;
@@ -112,10 +95,41 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function eraseCredentials(): void
+    /**
+     * @see UserInterface
+     */
+    public function getRoles(): array
     {
+        $roles = $this->roles;
+        $roles[] = 'ROLE_USER'; // Ajoute ROLE_USER par défaut
+        return array_unique($roles);
     }
 
+    public function setRoles(array $roles): static
+    {
+        $this->roles = $roles;
+        return $this;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function getUserIdentifier(): string
+    {
+        return $this->email;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function eraseCredentials(): void
+    {
+        // Effacer les données sensibles si nécessaire (ex: plaintext password)
+    }
+
+    /**
+     * @return Collection<int, Equipe>
+     */
     public function getEquipes(): Collection
     {
         return $this->equipes;
