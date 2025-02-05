@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails du Tournoi{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <h1>{{ tournoi.nom }}</h1>
+        <p><strong>Date de début :</strong> {{ tournoi.dateDebut|date('d/m/Y') }}</p>
+        <p><strong>Date de fin :</strong> {{ tournoi.dateFin|date('d/m/Y') }}</p>
+        <p><strong>Statut :</strong> {{ tournoi.status }}</p>
+        <p><strong>Nombre max d'équipes :</strong> {{ tournoi.nbMaxEquipes }}</p>
+        <a href="{{ path('tournois_list') }}" class="btn btn-secondary">Retour à la liste</a>
+    </div>
+{% endblock %}

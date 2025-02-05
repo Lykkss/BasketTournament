@@ -8,7 +8,7 @@
         <ul>
             {% for tournoi in tournois %}
                 <li>
-                    <a href="{{ path('tournoi_show', {id: tournoi.id}) }}">{{ tournoi.nom }}</a>
+                    <a href="{{ path('tournoi_show', { id: tournoi.id }) }}">{{ tournoi.nom }}</a>
                     (Début : {{ tournoi.dateDebut|date('d/m/Y') }})
                 </li>
             {% else %}
