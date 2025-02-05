@@ -2,28 +2,53 @@ security:
     # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
-        users_in_memory: { memory: null }
+        # Définition d'un provider basé sur l'entité User
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email # L'identifiant sera l'email
+        # used to reload user from session & other features (e.g. switch_user)
+
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+
         main:
             lazy: true
-            provider: users_in_memory
+            provider: app_user_provider
 
-            # activate different ways to authenticate
-            # https://symfony.com/doc/current/security.html#the-firewall
+            # Activer l'authentification par formulaire
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                default_target_path: app_home
+                enable_csrf: true
 
+            # Activer la déconnexion
+            logout:
+                path: app_logout
+                # where to redirect after logout
+                # target: app_any_route
+                # where to redirect after logout
+                # target: app_any_route
+            
+
+            # Impersonation (Prendre l'identité d'un autre utilisateur, utile pour les admins)
             # https://symfony.com/doc/current/security/impersonating_user.html
             # switch_user: true
 
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/admin, roles: ROLE_ADMIN } # Accès restreint aux admins
+        - { path: ^/profile, roles: ROLE_USER } # Un utilisateur doit être connecté pour voir son profil
+        - { path: ^/register, roles: PUBLIC_ACCESS } # Inscription ouverte à tous
+        - { path: ^/login, roles: PUBLIC_ACCESS } # Connexion ouverte à tous
+        - { path: ^/, roles: PUBLIC_ACCESS } # Autoriser tout le monde à voir la page d'accueil
 
 when@test:
     security:
