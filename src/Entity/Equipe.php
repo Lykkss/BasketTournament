@@ -6,6 +6,9 @@ use App\Repository\EquipeRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\User;
+use App\Entity\Game;
+use App\Entity\Tournoi;
 
 #[ORM\Entity(repositoryClass: EquipeRepository::class)]
 class Equipe
@@ -18,29 +21,25 @@ class Equipe
     #[ORM\Column(length: 255)]
     private ?string $nom = null;
 
-    /**
-     * @var Collection<int, User>
-     */
     #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'equipes')]
-    private Collection $joueur;
+    #[ORM\JoinTable(name: 'equipe_user')]
+    private Collection $joueurs;
 
-    /**
-     * @var Collection<int, Game>
-     */
-    #[ORM\OneToMany(targetEntity: Game::class, mappedBy: 'equipeA')]
-    private Collection $equipeB;
+    #[ORM\ManyToOne(targetEntity: Tournoi::class, inversedBy: 'equipes')]
+    #[ORM\JoinColumn(nullable: false)] // ✅ Une équipe DOIT être associée à un tournoi
+    private ?Tournoi $tournoi = null;
 
-    /**
-     * @var Collection<int, Game>
-     */
-    #[ORM\OneToMany(targetEntity: Game::class, mappedBy: 'relation')]
-    private Collection $scoreEquipeA;
+    #[ORM\OneToMany(targetEntity: Game::class, mappedBy: 'equipeA', cascade: ['persist', 'remove'])]
+    private Collection $gamesEquipeA;
+
+    #[ORM\OneToMany(targetEntity: Game::class, mappedBy: 'equipeB', cascade: ['persist', 'remove'])]
+    private Collection $gamesEquipeB;
 
     public function __construct()
     {
-        $this->joueur = new ArrayCollection();
-        $this->equipeB = new ArrayCollection();
-        $this->scoreEquipeA = new ArrayCollection();
+        $this->joueurs = new ArrayCollection();
+        $this->gamesEquipeA = new ArrayCollection();
+        $this->gamesEquipeB = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -56,91 +55,104 @@ class Equipe
     public function setNom(string $nom): static
     {
         $this->nom = $nom;
+        return $this;
+    }
 
+    public function getTournoi(): ?Tournoi
+    {
+        return $this->tournoi;
+    }
+
+    public function setTournoi(?Tournoi $tournoi): static
+    {
+        $this->tournoi = $tournoi;
         return $this;
     }
 
     /**
      * @return Collection<int, User>
      */
-    public function getJoueur(): Collection
+    public function getJoueurs(): Collection
     {
-        return $this->joueur;
+        return $this->joueurs;
     }
 
     public function addJoueur(User $joueur): static
     {
-        if (!$this->joueur->contains($joueur)) {
-            $this->joueur->add($joueur);
+        if (!$this->joueurs->contains($joueur)) {
+            $this->joueurs->add($joueur);
+            $joueur->addEquipe($this);
         }
-
         return $this;
     }
 
     public function removeJoueur(User $joueur): static
     {
-        $this->joueur->removeElement($joueur);
-
+        if ($this->joueurs->removeElement($joueur)) {
+            $joueur->removeEquipe($this);
+        }
         return $this;
     }
 
     /**
      * @return Collection<int, Game>
      */
-    public function getEquipeB(): Collection
+    public function getGamesEquipeA(): Collection
     {
-        return $this->equipeB;
+        return $this->gamesEquipeA;
     }
 
-    public function addEquipeB(Game $equipeB): static
+    public function addGameEquipeA(Game $game): static
     {
-        if (!$this->equipeB->contains($equipeB)) {
-            $this->equipeB->add($equipeB);
-            $equipeB->setEquipeA($this);
+        if (!$this->gamesEquipeA->contains($game)) {
+            $this->gamesEquipeA->add($game);
+            $game->setEquipeA($this);
         }
-
         return $this;
     }
 
-    public function removeEquipeB(Game $equipeB): static
+    public function removeGameEquipeA(Game $game): static
     {
-        if ($this->equipeB->removeElement($equipeB)) {
-            // set the owning side to null (unless already changed)
-            if ($equipeB->getEquipeA() === $this) {
-                $equipeB->setEquipeA(null);
+        if ($this->gamesEquipeA->removeElement($game)) {
+            if ($game->getEquipeA() === $this) {
+                $game->setEquipeA(null);
             }
         }
-
         return $this;
     }
 
     /**
      * @return Collection<int, Game>
      */
-    public function getScoreEquipeA(): Collection
+    public function getGamesEquipeB(): Collection
     {
-        return $this->scoreEquipeA;
+        return $this->gamesEquipeB;
     }
 
-    public function addScoreEquipeA(Game $scoreEquipeA): static
+    public function addGameEquipeB(Game $game): static
     {
-        if (!$this->scoreEquipeA->contains($scoreEquipeA)) {
-            $this->scoreEquipeA->add($scoreEquipeA);
-            $scoreEquipeA->setRelation($this);
+        if (!$this->gamesEquipeB->contains($game)) {
+            $this->gamesEquipeB->add($game);
+            $game->setEquipeB($this);
         }
-
         return $this;
     }
 
-    public function removeScoreEquipeA(Game $scoreEquipeA): static
+    public function removeGameEquipeB(Game $game): static
     {
-        if ($this->scoreEquipeA->removeElement($scoreEquipeA)) {
-            // set the owning side to null (unless already changed)
-            if ($scoreEquipeA->getRelation() === $this) {
-                $scoreEquipeA->setRelation(null);
+        if ($this->gamesEquipeB->removeElement($game)) {
+            if ($game->getEquipeB() === $this) {
+                $game->setEquipeB(null);
             }
         }
-
         return $this;
+    }
+
+    /**
+     * Permet d'afficher le nom de l'équipe quand on affiche un objet Equipe
+     */
+    public function __toString(): string
+    {
+        return $this->nom;
     }
 }
