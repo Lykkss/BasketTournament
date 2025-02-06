@@ -25,7 +25,7 @@ security:
             form_login:
                 login_path: app_login
                 check_path: app_login
-                default_target_path: app_home
+                default_target_path: app_redirect_after_login 
                 enable_csrf: true
 
             # Activer la déconnexion
@@ -34,7 +34,7 @@ security:
                 # where to redirect after logout
                 # target: app_any_route
                 # where to redirect after logout
-                # target: app_any_route
+                target: app_landing_public
             
 
             # Impersonation (Prendre l'identité d'un autre utilisateur, utile pour les admins)
@@ -44,12 +44,11 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        - { path: ^/admin, roles: ROLE_ADMIN } # Accès restreint aux admins
-        - { path: ^/profile, roles: ROLE_USER } # Un utilisateur doit être connecté pour voir son profil
-        - { path: ^/register, roles: PUBLIC_ACCESS } # Inscription ouverte à tous
-        - { path: ^/login, roles: PUBLIC_ACCESS } # Connexion ouverte à tous
-        - { path: ^/, roles: PUBLIC_ACCESS } # Autoriser tout le monde à voir la page d'accueil
-
+        - { path: ^/admin, roles: ROLE_ADMIN }  # Accès admin
+        - { path: ^/matchs, roles: ROLE_USER }  # Accès aux matchs pour les users
+        - { path: ^/tournois, roles: ROLE_USER }  # Accès aux tournois pour les users
+        - { path: ^/login, roles: PUBLIC_ACCESS }  # Page de connexion accessible
+        - { path: ^/, roles: PUBLIC_ACCESS }  # Landing accessible pour tous
 when@test:
     security:
         password_hashers:
