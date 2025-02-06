@@ -10,6 +10,11 @@ use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * @extends ServiceEntityRepository<Game>
+ *
+ * @method Game|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Game|null findOneBy(array $criteria, array $orderBy = null)
+ * @method Game[]    findAll()
+ * @method Game[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
 class GameRepository extends ServiceEntityRepository
 {
@@ -44,16 +49,19 @@ class GameRepository extends ServiceEntityRepository
 //    }
 
 /**
-     * Récupère les gagnants d'un tournoi donné
+     * Méthode pour obtenir les gagnants par tournoi
+     * @param Tournoi $tournoi
+     * @return array
      */
     public function getWinnersByTournoi(Tournoi $tournoi): array
-    {
-        return $this->createQueryBuilder('g')
-            ->select('g.vainqueur')
+    {  return $this->createQueryBuilder('g')
+            ->select('v.id')  // ✅ Sélectionne uniquement l'ID du vainqueur
+            ->join('g.vainqueur', 'v')
             ->where('g.tournoi = :tournoi')
-            ->andWhere('g.vainqueur IS NOT NULL') // S'assurer que le match a un vainqueur
+            ->andWhere('g.vainqueur IS NOT NULL')
             ->setParameter('tournoi', $tournoi)
             ->getQuery()
-            ->getResult();
+            ->getSingleColumnResult();  // ✅ Renvoie une liste d'IDs
     }
+
 }

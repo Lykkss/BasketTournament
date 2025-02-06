@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Entity;
 
 use App\Repository\TournoiRepository;
@@ -38,10 +37,19 @@ class Tournoi
     #[ORM\OneToMany(targetEntity: Game::class, mappedBy: 'tournoi', orphanRemoval: true)]
     private Collection $games;
 
+    // 🔥 Relation avec un tournoi final
+    #[ORM\ManyToOne(targetEntity: Tournoi::class, inversedBy: 'sousTournois')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Tournoi $parentTournoi = null;
+
+    #[ORM\OneToMany(targetEntity: Tournoi::class, mappedBy: 'parentTournoi')]
+    private Collection $sousTournois;
+
     public function __construct()
     {
         $this->participants = new ArrayCollection();
         $this->games = new ArrayCollection();
+        $this->sousTournois = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -155,4 +163,39 @@ class Tournoi
         }
         return $this;
     }
+
+    /**
+     * 🔥 Gestion du tournoi final
+     */
+    public function getParentTournoi(): ?Tournoi
+    {
+        return $this->parentTournoi;
+    }
+
+    public function setParentTournoi(?Tournoi $parentTournoi): static
+    {
+        $this->parentTournoi = $parentTournoi;
+        return $this;
+    }
+
+    public function getSousTournois(): Collection
+    {
+        return $this->sousTournois;
+    }
+
+    public function getChampionFinal(): ?Equipe
+{
+    if ($this->parentTournoi === null) {
+        return null; // Pas encore de tournoi final
+    }
+
+    // 🔥 Récupère le dernier match du tournoi final
+    $dernierMatch = $this->games->last();
+    if ($dernierMatch && $dernierMatch->getVainqueur()) {
+        return $dernierMatch->getVainqueur();
+    }
+
+    return null;
+}
+
 }
