@@ -1,0 +1,48 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Tournois{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <h1>Mes Tournois</h1>
+
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success">{{ message }}</div>
+        {% endfor %}
+
+        {% for message in app.flashes('warning') %}
+            <div class="alert alert-warning">{{ message }}</div>
+        {% endfor %}
+
+        {% for message in app.flashes('danger') %}
+            <div class="alert alert-danger">{{ message }}</div>
+        {% endfor %}
+
+        {% if tournois|length == 0 %}
+            <p>Aucun tournoi inscrit.</p>
+        {% else %}
+            <ul class="list-group">
+                {% for tournoi in tournois %}
+                    <li class="list-group-item">
+                        <strong>{{ tournoi.nom }}</strong> 
+                        <span class="badge {% if tournoi.status == 'À venir' %}bg-success{% elseif tournoi.status == 'En cours' %}bg-warning{% else %}bg-danger{% endif %}">
+                            {{ tournoi.status }}
+                        </span>
+                        <p>Date de début : {{ tournoi.dateDebut|date('d/m/Y') }}</p>
+                        <a href="{{ path('tournoi_show', { id: tournoi.id }) }}" class="btn btn-primary btn-sm">Voir le tournoi</a>
+
+                        {% if tournoi.status == 'À venir' %}
+                            <form method="post" action="{{ path('tournoi_desinscription', { id: tournoi.id }) }}" class="d-inline">
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Êtes-vous sûr de vouloir vous désinscrire ?');">
+                                    ❌ Se désinscrire
+                                </button>
+                            </form>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <a href="{{ path('tournois_list') }}" class="btn btn-secondary mt-3">Retour aux tournois</a>
+    </div>
+{% endblock %}
