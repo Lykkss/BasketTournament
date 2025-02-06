@@ -7,15 +7,6 @@ use App\Entity\Tournoi;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-
-/**
- * @extends ServiceEntityRepository<Game>
- *
- * @method Game|null find($id, $lockMode = null, $lockVersion = null)
- * @method Game|null findOneBy(array $criteria, array $orderBy = null)
- * @method Game[]    findAll()
- * @method Game[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- */
 class GameRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -23,45 +14,22 @@ class GameRepository extends ServiceEntityRepository
         parent::__construct($registry, Game::class);
     }
 
-//    /**
-//     * @return Game[] Returns an array of Game objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('g')
-//            ->andWhere('g.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('g.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
-
-//    public function findOneBySomeField($value): ?Game
-//    {
-//        return $this->createQueryBuilder('g')
-//            ->andWhere('g.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
-
-/**
-     * Méthode pour obtenir les gagnants par tournoi
-     * @param Tournoi $tournoi
-     * @return array
+    /**
+     * 🔍 Récupère les vainqueurs des matchs d'un tournoi donné
+     * Retourne un tableau contenant les IDs des équipes gagnantes
      */
-    public function getWinnersByTournoi(Tournoi $tournoi): array
-    {  return $this->createQueryBuilder('g')
-            ->select('v.id')  // ✅ Sélectionne uniquement l'ID du vainqueur
-            ->join('g.vainqueur', 'v')
-            ->where('g.tournoi = :tournoi')
-            ->andWhere('g.vainqueur IS NOT NULL')
+    public function getWinnersBySousTournois(Tournoi $tournoi): array
+    {
+        return $this->createQueryBuilder('g')
+            ->select('IDENTITY(g.vainqueur) as winner_id')
+            ->join('g.tournoi', 't')
+            ->where('t.parentTournoi = :tournoi') // Sélectionne uniquement les sous-tournois
+            ->andWhere('g.vainqueur IS NOT NULL') // Ne prend que les matchs avec un vainqueur
             ->setParameter('tournoi', $tournoi)
+            ->groupBy('g.vainqueur') // Assure une seule ligne par vainqueur
             ->getQuery()
-            ->getSingleColumnResult();  // ✅ Renvoie une liste d'IDs
+            ->getSingleColumnResult(); // Retourne uniquement les IDs des vainqueurs
     }
+
 
 }
