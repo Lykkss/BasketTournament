@@ -7,7 +7,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
-use Symfony\Component\Security\Core\Security;
+use Symfony\Bundle\SecurityBundle\Security;
 
 class SecurityController extends AbstractController
 {
@@ -48,15 +48,14 @@ class SecurityController extends AbstractController
         $user = $this->security->getUser();
 
         if (!$user) {
-            return $this->redirectToRoute('app_landing_public'); // 🔹 Page publique si non connecté
+            return $this->redirectToRoute('app_landing_public'); // 🔹 Redirige vers la landing publique
         }
 
-        // ✅ Si l'utilisateur est admin, il va sur le dashboard admin
         if ($this->isGranted('ROLE_ADMIN')) {
-            return $this->redirectToRoute('admin_dashboard'); 
+            return $this->redirectToRoute('admin'); // ✅ Redirige bien vers le Dashboard Admin
         }
 
-        // ✅ Sinon, il va sur la page utilisateur connectée
-        return $this->redirectToRoute('app_landing_private');
+        return $this->redirectToRoute('app_landing_private'); // 🔹 Redirige l'utilisateur normal
     }
+
 }
