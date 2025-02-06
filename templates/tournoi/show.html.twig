@@ -1,0 +1,65 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails du Tournoi{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <h1>{{ tournoi.nom }}</h1>
+        
+        <p><strong>Date de début :</strong> {{ tournoi.dateDebut|date('d/m/Y H:i') }}</p>
+        <p><strong>Date de fin :</strong> {{ tournoi.dateFin|date('d/m/Y H:i') }}</p>
+        <p><strong>Statut :</strong> 
+            <span class="badge {% if tournoi.status == 'À venir' %}bg-success{% elseif tournoi.status == 'En cours' %}bg-warning{% else %}bg-danger{% endif %}">
+                {{ tournoi.status }}
+            </span>
+        </p>
+        <p><strong>Nombre max d'équipes :</strong> {{ tournoi.nbMaxEquipes }}</p>
+
+        {# Affichage des messages flash #}
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success">{{ message }}</div>
+        {% endfor %}
+
+        {% for message in app.flashes('warning') %}
+            <div class="alert alert-warning">{{ message }}</div>
+        {% endfor %}
+
+        {% for message in app.flashes('danger') %}
+            <div class="alert alert-danger">{{ message }}</div>
+        {% endfor %}
+
+        {# Gestion des inscriptions et désinscriptions #}
+        {% if app.user %}
+            {% if tournoi.status != 'À venir' %}
+                <p class="text-danger">⚠️ Ce tournoi est {{ tournoi.status | lower }}, vous ne pouvez pas vous inscrire.</p>
+            {% elseif tournoi.participants.contains(app.user) %}
+                <p class="text-success">✅ Vous êtes déjà inscrit à ce tournoi.</p>
+                <form method="post" action="{{ path('tournoi_desinscription', { id: tournoi.id }) }}" class="d-inline">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir vous désinscrire ?');">
+                        ❌ Se désinscrire
+                    </button>
+                </form>
+            {% else %}
+                <form method="post" action="{{ path('tournoi_inscription', { id: tournoi.id }) }}">
+                    <button type="submit" class="btn btn-primary">S'inscrire au tournoi</button>
+                </form>
+            {% endif %}
+        {% else %}
+            <p><a href="{{ path('app_login') }}">Connectez-vous</a> pour vous inscrire.</p>
+        {% endif %}
+
+        {# Liste des participants #}
+        <h2 class="mt-4">Participants</h2>
+        {% if tournoi.participants|length > 0 %}
+            <ul class="list-group">
+                {% for participant in tournoi.participants %}
+                    <li class="list-group-item">{{ participant.email }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Aucun participant pour le moment.</p>
+        {% endif %}
+
+        <a href="{{ path('tournois_list') }}" class="btn btn-secondary mt-3">Retour aux tournois</a>
+    </div>
+{% endblock %}
