@@ -31,7 +31,7 @@ class Game
     #[ORM\JoinColumn(nullable: true)]
     private ?Equipe $vainqueur = null;
 
-    #[ORM\ManyToOne(targetEntity: Tournoi::class)]
+    #[ORM\ManyToOne(targetEntity: Tournoi::class, inversedBy: 'games')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Tournoi $tournoi = null;
 
@@ -70,6 +70,7 @@ class Game
     public function setScoreEquipeA(?int $scoreEquipeA): static
     {
         $this->scoreEquipeA = $scoreEquipeA;
+        $this->determineVainqueur();
         return $this;
     }
 
@@ -81,6 +82,7 @@ class Game
     public function setScoreEquipeB(?int $scoreEquipeB): static
     {
         $this->scoreEquipeB = $scoreEquipeB;
+        $this->determineVainqueur();
         return $this;
     }
 
@@ -105,4 +107,21 @@ class Game
         $this->tournoi = $tournoi;
         return $this;
     }
+
+    /**
+     * Détermine automatiquement le vainqueur du match.
+     */
+    public function determineVainqueur(): void
+    {
+        if ($this->scoreEquipeA !== null && $this->scoreEquipeB !== null) {
+            if ($this->scoreEquipeA > $this->scoreEquipeB) {
+                $this->vainqueur = $this->equipeA;
+            } elseif ($this->scoreEquipeB > $this->scoreEquipeA) {
+                $this->vainqueur = $this->equipeB;
+            } else {
+                $this->vainqueur = null; // Match nul
+            }
+        }
+    }
+
 }

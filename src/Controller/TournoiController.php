@@ -7,7 +7,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-
+use App\Entity\Game;
 
 #[Route('/tournois')]
 class TournoiController extends AbstractController
@@ -83,6 +83,40 @@ class TournoiController extends AbstractController
         return $this->redirectToRoute('mes_tournois');
     }
 
+    #[Route('/tournoi/{id}/generate-matches', name: 'tournoi_generate_matches')]
+public function generateMatches(Tournoi $tournoi, EntityManagerInterface $entityManager): Response
+{
+    // Récupérer les équipes inscrites
+    $equipes = $tournoi->getEquipes();
+
+    if (count($equipes) < 2) {
+        $this->addFlash('warning', 'Il faut au moins 2 équipes pour générer des matchs.');
+        return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
+    }
+
+    // Mélanger les équipes pour un tirage au sort aléatoire
+    $equipesArray = $equipes->toArray();
+    shuffle($equipesArray);
+
+    // Générer les matchs (tour par tour)
+    $nbEquipes = count($equipesArray);
+    for ($i = 0; $i < $nbEquipes; $i += 2) {
+        if (isset($equipesArray[$i + 1])) {
+            $match = new Game();
+            $match->setTournoi($tournoi);
+            $match->setEquipeA($equipesArray[$i]);
+            $match->setEquipeB($equipesArray[$i + 1]);
+            $entityManager->persist($match);
+        }
+    }
+
+    $entityManager->flush();
+
+    $this->addFlash('success', 'Les matchs ont été générés avec succès !');
+    return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
+}
+
+
     #[Route('/desinscription/{id}', name: 'tournoi_desinscription', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function desinscription(Tournoi $tournoi, EntityManagerInterface $entityManager): Response
     {
@@ -111,4 +145,13 @@ class TournoiController extends AbstractController
 
         return $this->redirectToRoute('mes_tournois');
     }
+
+    #[Route('/{id}/bracket', name: 'tournoi_bracket', methods: ['GET'])]
+    public function bracket(Tournoi $tournoi): Response
+    {
+        return $this->render('tournoi/bracket.html.twig', [
+            'tournoi' => $tournoi,
+        ]);
+    }
+
 }

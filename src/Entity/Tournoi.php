@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use App\Entity\User;
+use App\Entity\Game;
 
 #[ORM\Entity(repositoryClass: TournoiRepository::class)]
 class Tournoi
@@ -33,10 +34,14 @@ class Tournoi
 
     #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'tournoisInscrits')]
     private Collection $participants;
-    
+
+    #[ORM\OneToMany(targetEntity: Game::class, mappedBy: 'tournoi', orphanRemoval: true)]
+    private Collection $games;
+
     public function __construct()
     {
         $this->participants = new ArrayCollection();
+        $this->games = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -111,7 +116,7 @@ class Tournoi
     {
         if (!$this->participants->contains($user)) {
             $this->participants->add($user);
-            $user->addTournoiInscrit($this); // 🔥 Ajout aussi côté User
+            $user->addTournoiInscrit($this);
         }
         return $this;
     }
@@ -119,7 +124,34 @@ class Tournoi
     public function removeParticipant(User $user): self
     {
         if ($this->participants->removeElement($user)) {
-            $user->removeTournoiInscrit($this); // 🔥 Suppression aussi côté User
+            $user->removeTournoiInscrit($this);
+        }
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Game>
+     */
+    public function getGames(): Collection
+    {
+        return $this->games;
+    }
+
+    public function addGame(Game $game): static
+    {
+        if (!$this->games->contains($game)) {
+            $this->games->add($game);
+            $game->setTournoi($this);
+        }
+        return $this;
+    }
+
+    public function removeGame(Game $game): static
+    {
+        if ($this->games->removeElement($game)) {
+            if ($game->getTournoi() === $this) {
+                $game->setTournoi(null);
+            }
         }
         return $this;
     }

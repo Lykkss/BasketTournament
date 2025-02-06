@@ -3,8 +3,10 @@
 namespace App\Repository;
 
 use App\Entity\Game;
+use App\Entity\Tournoi;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+
 
 /**
  * @extends ServiceEntityRepository<Game>
@@ -40,4 +42,18 @@ class GameRepository extends ServiceEntityRepository
 //            ->getOneOrNullResult()
 //        ;
 //    }
+
+/**
+     * Récupère les gagnants d'un tournoi donné
+     */
+    public function getWinnersByTournoi(Tournoi $tournoi): array
+    {
+        return $this->createQueryBuilder('g')
+            ->select('g.vainqueur')
+            ->where('g.tournoi = :tournoi')
+            ->andWhere('g.vainqueur IS NOT NULL') // S'assurer que le match a un vainqueur
+            ->setParameter('tournoi', $tournoi)
+            ->getQuery()
+            ->getResult();
+    }
 }
