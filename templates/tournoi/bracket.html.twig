@@ -1,41 +1,74 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Bracket du Tournoi{% endblock %}
+{% block title %}Bracket - {{ tournoi.nom }}{% endblock %}
 
 {% block body %}
-    <div class="container mt-5">
-        <h2 class="text-center">Bracket du tournoi : {{ tournoi.nom }}</h2>
+<div class="container mt-4">
+    <h1 class="text-center">🏆 Bracket du Tournoi - {{ tournoi.nom }}</h1>
 
-        {% if matches|length > 0 %}
-            <div class="row">
-                {% for match in matches %}
-                    <div class="col-md-6">
-                        <div class="card text-center mb-3">
-                            <div class="card-header bg-primary text-white">
-                                Match #{{ loop.index }}
-                            </div>
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    {{ match.equipeA.nom }} 
-                                    <span class="text-danger">vs</span> 
-                                    {{ match.equipeB.nom }}
-                                </h5>
-                                <p class="card-text">
-                                    <strong>Score :</strong> 
-                                    {{ match.scoreEquipeA|default('-') }} - {{ match.scoreEquipeB|default('-') }}
-                                </p>
-                                {% if match.vainqueur %}
-                                    <p class="alert alert-success">🏆 Vainqueur : {{ match.vainqueur.nom }}</p>
-                                {% else %}
-                                    <p class="alert alert-warning">⚠️ En attente de résultats</p>
-                                {% endif %}
-                            </div>
-                        </div>
+    {# Vérification s'il y a des matchs #}
+    {% if matches|length > 0 %}
+        <div class="bracket mt-4">
+            {% for match in matches %}
+                <div class="match-card">
+                    <div class="team">
+                        <span class="team-name">{{ match.equipeA.nom }}</span>
+                        <span class="team-score">{{ match.scoreEquipeA is not null ? match.scoreEquipeA : '-' }}</span>
                     </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="text-center mt-4">Aucun match disponible.</p>
-        {% endif %}
-    </div>
+                    <div class="vs">VS</div>
+                    <div class="team">
+                        <span class="team-name">{{ match.equipeB.nom }}</span>
+                        <span class="team-score">{{ match.scoreEquipeB is not null ? match.scoreEquipeB : '-' }}</span>
+                    </div>
+                    <div class="winner">
+                        {% if match.vainqueur %}
+                            🎉 <strong>Vainqueur :</strong> {{ match.vainqueur.nom }}
+                        {% else %}
+                            ⚠️ Match en attente
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted text-center mt-4">⚠️ Aucun match généré pour ce tournoi.</p>
+    {% endif %}
+
+    {# 🔹 Bouton de retour aux détails du tournoi #}
+    <a href="{{ path('tournoi_show', { id: tournoi.id }) }}" class="btn btn-secondary mt-3">⬅️ Retour au tournoi</a>
+</div>
+
+{# Styles pour le bracket #}
+<style>
+    .bracket {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .match-card {
+        border: 1px solid #ddd;
+        padding: 10px;
+        width: 400px;
+        margin-bottom: 15px;
+        text-align: center;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+    }
+    .team {
+        display: flex;
+        justify-content: space-between;
+        font-size: 1.2em;
+        padding: 5px;
+    }
+    .vs {
+        font-weight: bold;
+        font-size: 1.5em;
+        margin: 10px 0;
+    }
+    .winner {
+        font-weight: bold;
+        color: #28a745;
+    }
+</style>
+
 {% endblock %}
