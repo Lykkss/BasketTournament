@@ -110,6 +110,7 @@ class Game
 
     /**
      * 🔥 Détermine automatiquement le vainqueur du match.
+     * Appelée lorsque les scores sont modifiés pour déterminer l'équipe gagnante.
      */
     public function determineVainqueur(): void
     {
