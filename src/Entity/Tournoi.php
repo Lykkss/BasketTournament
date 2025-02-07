@@ -30,8 +30,8 @@ class Tournoi
     #[ORM\Column(length: 255)]
     private ?string $status = null;
 
-    #[ORM\Column]
-    private ?int $nbMaxEquipes = null;
+    #[ORM\Column(type:"integer")]
+    private ?int $nbMaxEquipes = 4;
 
     #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'tournoisInscrits')]
     private Collection $participants;

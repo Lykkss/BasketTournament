@@ -25,18 +25,25 @@ class CreateAdminCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        // Vérifie si un admin existe déjà
+        $existingAdmin = $this->entityManager->getRepository(User::class)->findOneBy(['email' => 'admin@example.com']);
+        if ($existingAdmin) {
+            $output->writeln('<comment>⚠️ Un administrateur existe déjà.</comment>');
+            return Command::FAILURE;
+        }
+
+        // Création de l'admin
         $admin = new User();
         $admin->setEmail('admin@example.com');
+        $admin->setPrenom('Admin');
+        $admin->setNom('SuperAdmin');
         $admin->setRoles(['ROLE_ADMIN']);
 
-        // ✅ Ajouter nom et prénom obligatoires
-        $admin->setNom('Admin');
-        $admin->setPrenom('Super');
-
-        // ✅ Définir un mot de passe sécurisé
-        $hashedPassword = $this->passwordHasher->hashPassword($admin, 'Admin123!');
+        // Hachage du mot de passe
+        $hashedPassword = $this->passwordHasher->hashPassword($admin, 'admin123');
         $admin->setPassword($hashedPassword);
 
+        // Sauvegarde en base de données
         $this->entityManager->persist($admin);
         $this->entityManager->flush();
 

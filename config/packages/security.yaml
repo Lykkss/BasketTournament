@@ -19,22 +19,27 @@ security:
             form_login:
                 login_path: app_login
                 check_path: app_login
-                default_target_path: admin_dashboard
                 enable_csrf: true
+                default_target_path: app_home  # ✅ Redirection après connexion
+
             logout:
                 path: app_logout
                 target: app_home
+
             remember_me:
                 secret: '%kernel.secret%'
                 lifetime: 604800 # 1 semaine
                 path: /
 
+    role_hierarchy:
+        ROLE_ADMIN: [ROLE_USER]  # ✅ Un admin a automatiquement les permissions d’un user
+
     access_control:
-        - { path: ^/admin, roles: ROLE_ADMIN }    # Accès au dashboard admin
-        - { path: ^/matchs, roles: ROLE_USER }    # Accès aux matchs pour les users
-        - { path: ^/tournois, roles: ROLE_USER }  # Accès aux tournois pour les users
-        - { path: ^/login, roles: PUBLIC_ACCESS } # Page de connexion accessible à tous
-        - { path: ^/, roles: PUBLIC_ACCESS }      # Landing accessible à tous
+        - { path: ^/admin, roles: ROLE_ADMIN }    # ✅ Admin uniquement
+        - { path: ^/matchs, roles: ROLE_USER }    # ✅ Matchs accessibles aux utilisateurs connectés
+        - { path: ^/tournois, roles: ROLE_USER }  # ✅ Tournois accessibles aux utilisateurs connectés
+        - { path: ^/login, roles: PUBLIC_ACCESS } # ✅ Page de connexion accessible à tous
+        - { path: ^/, roles: PUBLIC_ACCESS }      # ✅ Landing accessible à tous
 
 when@test:
     security:
