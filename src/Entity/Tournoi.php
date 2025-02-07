@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Entity;
 
 use App\Repository\TournoiRepository;
@@ -7,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use App\Entity\User;
 use App\Entity\Game;
+use App\Entity\Equipe;
 
 #[ORM\Entity(repositoryClass: TournoiRepository::class)]
 class Tournoi
@@ -45,11 +47,16 @@ class Tournoi
     #[ORM\OneToMany(targetEntity: Tournoi::class, mappedBy: 'parentTournoi')]
     private Collection $sousTournois;
 
+    // 🔥 Relation avec les équipes
+    #[ORM\OneToMany(targetEntity: Equipe::class, mappedBy: 'tournoi', cascade: ['persist', 'remove'])]
+    private Collection $equipes;
+
     public function __construct()
     {
         $this->participants = new ArrayCollection();
         $this->games = new ArrayCollection();
         $this->sousTournois = new ArrayCollection();
+        $this->equipes = new ArrayCollection(); // ✅ Correction pour éviter l'erreur de mapping
     }
 
     public function getId(): ?int
@@ -183,19 +190,45 @@ class Tournoi
         return $this->sousTournois;
     }
 
+    /**
+     * 🔥 Gestion des équipes du tournoi
+     */
+    public function getEquipes(): Collection
+    {
+        return $this->equipes;
+    }
+
+    public function addEquipe(Equipe $equipe): static
+    {
+        if (!$this->equipes->contains($equipe)) {
+            $this->equipes->add($equipe);
+            $equipe->setTournoi($this);
+        }
+        return $this;
+    }
+
+    public function removeEquipe(Equipe $equipe): static
+    {
+        if ($this->equipes->removeElement($equipe)) {
+            if ($equipe->getTournoi() === $this) {
+                $equipe->setTournoi(null);
+            }
+        }
+        return $this;
+    }
+
     public function getChampionFinal(): ?Equipe
-{
-    if ($this->parentTournoi === null) {
-        return null; // Pas encore de tournoi final
+    {
+        if ($this->parentTournoi === null) {
+            return null; // Pas encore de tournoi final
+        }
+
+        // 🔥 Récupère le dernier match du tournoi final
+        $dernierMatch = $this->games->last();
+        if ($dernierMatch && $dernierMatch->getVainqueur()) {
+            return $dernierMatch->getVainqueur();
+        }
+
+        return null;
     }
-
-    // 🔥 Récupère le dernier match du tournoi final
-    $dernierMatch = $this->games->last();
-    if ($dernierMatch && $dernierMatch->getVainqueur()) {
-        return $dernierMatch->getVainqueur();
-    }
-
-    return null;
-}
-
 }

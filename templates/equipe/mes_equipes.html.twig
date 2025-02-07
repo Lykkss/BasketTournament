@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Équipes{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h2 class="mt-4">📋 Mes Équipes</h2>
+
+        {% if equipes is empty %}
+            <p class="text-muted">Vous ne faites partie d'aucune équipe.</p>
+        {% else %}
+            <div class="row">
+                {% for equipe in equipes %}
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ equipe.nom }}</h5>
+                                <p class="card-text">
+                                    <strong>Tournoi :</strong> {{ equipe.tournoi.nom }}<br>
+                                    <strong>Membres :</strong> {{ equipe.getMembres|length }}
+                                </p>
+                                <a href="{{ path('app_equipe_show', {'id': equipe.id}) }}" class="btn btn-primary">
+                                    Voir l'équipe
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

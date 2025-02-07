@@ -34,16 +34,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     /**
+     * ✅ Correction : Relation avec Equipe (membres)
      * @var Collection<int, Equipe>
      */
-    #[ORM\ManyToMany(targetEntity: Equipe::class, mappedBy: 'joueur')]
+    #[ORM\ManyToMany(targetEntity: Equipe::class, mappedBy: 'membres')]
     private Collection $equipes;
 
-    /**
-     * @var Collection<int, Tournoi>
-     */
     #[ORM\ManyToMany(targetEntity: Tournoi::class, inversedBy: 'participants')]
-    #[ORM\JoinTable(name: 'tournoi_user')] // ✅ Vérifier que le nom de la table est correct
+    #[ORM\JoinTable(name: 'tournoi_user')]
     private Collection $tournoisInscrits;
 
     public function __construct()
@@ -52,50 +50,50 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->tournoisInscrits = new ArrayCollection();
     }
 
-    public function getId(): ?int
-    {
-        return $this->id;
+    public function getId(): ?int 
+    { 
+        return $this->id; 
     }
 
-    public function getEmail(): ?string
-    {
-        return $this->email;
+    public function getEmail(): ?string 
+    { 
+        return $this->email; 
     }
 
-    public function setEmail(string $email): static
-    {
-        $this->email = $email;
-        return $this;
+    public function setEmail(string $email): static 
+    { 
+        $this->email = $email; 
+        return $this; 
     }
 
-    public function getNom(): ?string
-    {
-        return $this->nom;
+    public function getNom(): ?string 
+    { 
+        return $this->nom; 
     }
 
-    public function setNom(string $nom): static
-    {
-        $this->nom = $nom;
-        return $this;
+    public function setNom(string $nom): static 
+    { 
+        $this->nom = $nom; 
+        return $this; 
     }
 
-    public function getPrenom(): ?string
-    {
-        return $this->prenom;
+    public function getPrenom(): ?string 
+    { 
+        return $this->prenom; 
     }
 
-    public function setPrenom(string $prenom): static
-    {
-        $this->prenom = $prenom;
-        return $this;
+    public function setPrenom(string $prenom): static 
+    { 
+        $this->prenom = $prenom; 
+        return $this; 
     }
 
-    public function getUserIdentifier(): string
-    {
-        return (string) $this->email;
+    public function getUserIdentifier(): string 
+    { 
+        return (string) $this->email; 
     }
 
-    public function getRoles(): array
+    public function getRoles(): array 
     {
         $roles = $this->roles;
         $roles[] = 'ROLE_USER';
@@ -103,86 +101,72 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return array_unique($roles);
     }
 
-    public function setRoles(array $roles): static
-    {
-        $this->roles = $roles;
-        return $this;
+    public function setRoles(array $roles): static 
+    { 
+        $this->roles = $roles; 
+        return $this; 
     }
 
-    public function getPassword(): ?string
-    {
-        return $this->password ?: null;
+    public function getPassword(): ?string 
+    { 
+        return $this->password; 
     }
 
-    public function setPassword(string $password): static
-    {
-        $this->password = $password;
-        return $this;
+    public function setPassword(string $password): static 
+    { 
+        $this->password = $password; 
+        return $this; 
     }
 
-    public function eraseCredentials(): void
-    {
-    }
-
-    public function getEquipes(): Collection
-    {
-        return $this->equipes;
-    }
-
-    public function addEquipe(Equipe $equipe): static
-    {
-        if (!$this->equipes->contains($equipe)) {
-            $this->equipes->add($equipe);
-            $equipe->addJoueur($this);
-        }
-        return $this;
-    }
-
-    public function removeEquipe(Equipe $equipe): static
-    {
-        if ($this->equipes->removeElement($equipe)) {
-            $equipe->removeJoueur($this);
-        }
-        return $this;
+    public function eraseCredentials(): void 
+    { 
+        // Efface les informations sensibles
     }
 
     /**
- * Récupérer la liste des tournois auxquels l'utilisateur est inscrit.
- *
- * @return Collection<int, Tournoi>
- */
-public function getTournoisInscrits(): Collection
-{
-    return $this->tournoisInscrits;
-}
-
-/**
- * Ajouter un tournoi à la liste des tournois inscrits par l'utilisateur.
- *
- * @param Tournoi $tournoi
- * @return static
- */
-public function addTournoiInscrit(Tournoi $tournoi): static
-{
-    if (!$this->tournoisInscrits->contains($tournoi)) {
-        $this->tournoisInscrits->add($tournoi);
-        $tournoi->addParticipant($this); // 🔥 Ajout aussi côté Tournoi
+     * ✅ Correction : Relation avec Equipe (membres)
+     */
+    public function getEquipes(): Collection 
+    { 
+        return $this->equipes; 
     }
-    return $this;
-}
 
-/**
- * Supprimer un tournoi de la liste des tournois inscrits par l'utilisateur.
- *
- * @param Tournoi $tournoi
- * @return static
- */
-public function removeTournoiInscrit(Tournoi $tournoi): static
-{
-    if ($this->tournoisInscrits->removeElement($tournoi)) {
-        $tournoi->removeParticipant($this); // 🔥 Suppression aussi côté Tournoi
+    public function addEquipe(Equipe $equipe): static 
+    {
+        if (!$this->equipes->contains($equipe)) {
+            $this->equipes->add($equipe);
+            $equipe->addMembre($this);
+        }
+        return $this;
     }
-    return $this;
-}
 
+    public function removeEquipe(Equipe $equipe): static 
+    {
+        if ($this->equipes->removeElement($equipe)) {
+            $equipe->removeMembre($this);
+        }
+        return $this;
+    }
+
+    public function getTournoisInscrits(): Collection 
+    { 
+        return $this->tournoisInscrits; 
+    }
+
+    public function addTournoiInscrit(Tournoi $tournoi): static 
+    {
+        if (!$this->tournoisInscrits->contains($tournoi)) {
+            $this->tournoisInscrits->add($tournoi);
+            $tournoi->addParticipant($this);
+        }
+        return $this;
+    }
+
+    public function removeTournoiInscrit(Tournoi $tournoi): static 
+    {
+        if ($this->tournoisInscrits->removeElement($tournoi)) {
+            $tournoi->removeParticipant($this);
+        }
+        return $this;
+    }
 }

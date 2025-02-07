@@ -13,11 +13,11 @@ class Game
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Equipe::class)]
+    #[ORM\ManyToOne(targetEntity: Equipe::class, inversedBy: 'gamesEquipeA')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Equipe $equipeA = null;
 
-    #[ORM\ManyToOne(targetEntity: Equipe::class)]
+    #[ORM\ManyToOne(targetEntity: Equipe::class, inversedBy: 'gamesEquipeB')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Equipe $equipeB = null;
 
@@ -109,7 +109,7 @@ class Game
     }
 
     /**
-     * Détermine automatiquement le vainqueur du match.
+     * 🔥 Détermine automatiquement le vainqueur du match.
      */
     public function determineVainqueur(): void
     {
@@ -123,5 +123,4 @@ class Game
             }
         }
     }
-
 }
