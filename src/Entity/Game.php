@@ -35,6 +35,9 @@ class Game
     #[ORM\JoinColumn(nullable: false)]
     private ?Tournoi $tournoi = null;
 
+
+
+
     public function getId(): ?int
     {
         return $this->id;
