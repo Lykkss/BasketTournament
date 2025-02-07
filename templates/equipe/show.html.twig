@@ -3,22 +3,21 @@
 {% block title %}Détails de l'Équipe{% endblock %}
 
 {% block body %}
-    <div class="container">
-        <h2 class="mt-4">🏀 Détails de l'Équipe : {{ equipe.nom }}</h2>
+    <div class="container mt-4">
+        <h1 class="text-center">Équipe : {{ equipe.nom }}</h1>
 
-        <p><strong>Tournoi :</strong> {{ equipe.tournoi.nom }}</p>
-        <p><strong>Membres :</strong></p>
-
-        {% if equipe.getMembres is empty %}
-            <p class="text-muted">Aucun membre dans cette équipe.</p>
-        {% else %}
-            <ul>
-                {% for membre in equipe.getMembres %}
-                    <li>{{ membre.nom }} {{ membre.prenom }}</li>
+        <p><strong>🏆 Tournoi :</strong> {{ equipe.tournoi.nom }}</p>
+        
+        {# 🔹 Affichage des membres #}
+        <h2 class="mt-4">👥 Membres de l'équipe</h2>
+        {% if equipe.membres|length > 0 %}
+            <ul class="list-group">
+                {% for membre in equipe.membres %}
+                    <li class="list-group-item">{{ membre.nom }} {{ membre.prenom }} - {{ membre.email }}</li>
                 {% endfor %}
             </ul>
+        {% else %}
+            <p class="text-muted">Aucun membre dans cette équipe.</p>
         {% endif %}
-
-        <a href="{{ path('app_equipe_index') }}" class="btn btn-secondary mt-3">Retour</a>
     </div>
 {% endblock %}

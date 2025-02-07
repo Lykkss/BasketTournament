@@ -139,6 +139,56 @@ class TournoiController extends AbstractController
             'matches' => $matches,
         ]);
     }
+    
+    #[Route('/inscription/{id}', name: 'tournoi_inscription', methods: ['POST'])]
+public function inscription(Tournoi $tournoi, EntityManagerInterface $entityManager): Response
+{
+    $user = $this->getUser();
+
+    if (!$user) {
+        $this->addFlash('danger', 'Vous devez être connecté pour vous inscrire.');
+        return $this->redirectToRoute('app_login');
+    }
+
+    if ($tournoi->getParticipants()->contains($user)) {
+        $this->addFlash('warning', 'Vous êtes déjà inscrit à ce tournoi.');
+        return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
+    }
+
+    // Ajouter l'utilisateur au tournoi
+    $tournoi->addParticipant($user);
+    $entityManager->persist($tournoi);
+    $entityManager->flush();
+
+    $this->addFlash('success', 'Vous êtes inscrit au tournoi.');
+    return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
+}
+
+#[Route('/desinscription/{id}', name: 'tournoi_desinscription', methods: ['POST'])]
+public function desinscription(Tournoi $tournoi, EntityManagerInterface $entityManager): Response
+{
+    $user = $this->getUser();
+
+    if (!$user) {
+        $this->addFlash('danger', 'Vous devez être connecté pour vous désinscrire.');
+        return $this->redirectToRoute('app_login');
+    }
+
+    if (!$tournoi->getParticipants()->contains($user)) {
+        $this->addFlash('warning', 'Vous n\'êtes pas inscrit à ce tournoi.');
+        return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
+    }
+
+    // Retirer l'utilisateur du tournoi
+    $tournoi->removeParticipant($user);
+    $entityManager->persist($tournoi);
+    $entityManager->flush();
+
+    $this->addFlash('success', 'Vous vous êtes désinscrit du tournoi.');
+    return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
+}
+
+
 
     #[Route('/mes-tournois', name: 'mes_tournois', methods: ['GET'])]
     public function mesTournois(EntityManagerInterface $entityManager): Response
