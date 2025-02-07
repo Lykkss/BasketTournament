@@ -23,10 +23,10 @@ class Equipe
 
     #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'equipes')]
     #[ORM\JoinTable(name: 'equipe_user')]
-    private Collection $joueurs;
+    private Collection $membres;
 
     #[ORM\ManyToOne(targetEntity: Tournoi::class, inversedBy: 'equipes')]
-    #[ORM\JoinColumn(nullable: false)] // ✅ Une équipe DOIT être associée à un tournoi
+    #[ORM\JoinColumn(nullable: false)]
     private ?Tournoi $tournoi = null;
 
     #[ORM\OneToMany(targetEntity: Game::class, mappedBy: 'equipeA', cascade: ['persist', 'remove'])]
@@ -37,72 +37,74 @@ class Equipe
 
     public function __construct()
     {
-        $this->joueurs = new ArrayCollection();
+        $this->membres = new ArrayCollection();
         $this->gamesEquipeA = new ArrayCollection();
         $this->gamesEquipeB = new ArrayCollection();
     }
 
-    public function getId(): ?int
-    {
-        return $this->id;
+    public function getId(): ?int 
+    { 
+        return $this->id; 
     }
 
-    public function getNom(): ?string
-    {
-        return $this->nom;
+    public function getNom(): ?string 
+    { 
+        return $this->nom; 
     }
 
-    public function setNom(string $nom): static
-    {
-        $this->nom = $nom;
-        return $this;
+    public function setNom(string $nom): static 
+    { 
+        $this->nom = $nom; 
+        return $this; 
     }
 
-    public function getTournoi(): ?Tournoi
-    {
-        return $this->tournoi;
+    public function getTournoi(): ?Tournoi 
+    { 
+        return $this->tournoi; 
     }
 
-    public function setTournoi(?Tournoi $tournoi): static
-    {
-        $this->tournoi = $tournoi;
-        return $this;
+    public function setTournoi(?Tournoi $tournoi): static 
+    { 
+        $this->tournoi = $tournoi; 
+        return $this; 
     }
 
     /**
+     * ✅ Gestion des membres de l'équipe
      * @return Collection<int, User>
      */
-    public function getJoueurs(): Collection
-    {
-        return $this->joueurs;
+    public function getMembres(): Collection 
+    { 
+        return $this->membres; 
     }
 
-    public function addJoueur(User $joueur): static
+    public function addMembre(User $membre): static 
     {
-        if (!$this->joueurs->contains($joueur)) {
-            $this->joueurs->add($joueur);
-            $joueur->addEquipe($this);
+        if (!$this->membres->contains($membre)) {
+            $this->membres->add($membre);
+            $membre->addEquipe($this);
         }
         return $this;
     }
 
-    public function removeJoueur(User $joueur): static
+    public function removeMembre(User $membre): static 
     {
-        if ($this->joueurs->removeElement($joueur)) {
-            $joueur->removeEquipe($this);
+        if ($this->membres->removeElement($membre)) {
+            $membre->removeEquipe($this);
         }
         return $this;
     }
 
     /**
+     * ✅ Gestion des matchs où cette équipe est l'équipe A
      * @return Collection<int, Game>
      */
-    public function getGamesEquipeA(): Collection
-    {
-        return $this->gamesEquipeA;
+    public function getGamesEquipeA(): Collection 
+    { 
+        return $this->gamesEquipeA; 
     }
 
-    public function addGameEquipeA(Game $game): static
+    public function addGameEquipeA(Game $game): static 
     {
         if (!$this->gamesEquipeA->contains($game)) {
             $this->gamesEquipeA->add($game);
@@ -111,7 +113,7 @@ class Equipe
         return $this;
     }
 
-    public function removeGameEquipeA(Game $game): static
+    public function removeGameEquipeA(Game $game): static 
     {
         if ($this->gamesEquipeA->removeElement($game)) {
             if ($game->getEquipeA() === $this) {
@@ -122,14 +124,15 @@ class Equipe
     }
 
     /**
+     * ✅ Gestion des matchs où cette équipe est l'équipe B
      * @return Collection<int, Game>
      */
-    public function getGamesEquipeB(): Collection
-    {
-        return $this->gamesEquipeB;
+    public function getGamesEquipeB(): Collection 
+    { 
+        return $this->gamesEquipeB; 
     }
 
-    public function addGameEquipeB(Game $game): static
+    public function addGameEquipeB(Game $game): static 
     {
         if (!$this->gamesEquipeB->contains($game)) {
             $this->gamesEquipeB->add($game);
@@ -138,7 +141,7 @@ class Equipe
         return $this;
     }
 
-    public function removeGameEquipeB(Game $game): static
+    public function removeGameEquipeB(Game $game): static 
     {
         if ($this->gamesEquipeB->removeElement($game)) {
             if ($game->getEquipeB() === $this) {
@@ -151,8 +154,8 @@ class Equipe
     /**
      * Permet d'afficher le nom de l'équipe quand on affiche un objet Equipe
      */
-    public function __toString(): string
-    {
-        return $this->nom;
+    public function __toString(): string 
+    { 
+        return $this->nom ?: 'Équipe inconnue'; 
     }
 }

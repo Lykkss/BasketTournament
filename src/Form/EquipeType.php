@@ -7,6 +7,7 @@ use App\Entity\Tournoi;
 use App\Entity\User;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -16,16 +17,21 @@ class EquipeType extends AbstractType
     {
         $builder
             ->add('nom')
-            ->add('joueurs', EntityType::class, [
-                'class' => User::class,
-                'choice_label' => 'id',
-                'multiple' => true,
-            ])
             ->add('tournoi', EntityType::class, [
                 'class' => Tournoi::class,
-                'choice_label' => 'id',
+                'choice_label' => 'nom',
+                'label' => 'Tournoi'
             ])
-        ;
+            ->add('membres', EntityType::class, [
+                'class' => User::class,
+                'choice_label' => 'email',
+                'multiple' => true,
+                'expanded' => true,
+                'label' => 'Membres de l\'équipe'
+            ])
+            ->add('save', SubmitType::class, [
+                'label' => 'Créer une équipe'
+            ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

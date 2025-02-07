@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer une Équipe{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h2 class="mt-4">➕ Créer une Équipe</h2>
+
+        {{ form_start(form) }}
+            <div class="mb-3">
+                {{ form_label(form.nom, 'Nom de l\'équipe') }}
+                {{ form_widget(form.nom, { 'attr': {'class': 'form-control'} }) }}
+            </div>
+            <div class="mb-3">
+                {{ form_label(form.tournoi, 'Tournoi associé') }}
+                {{ form_widget(form.tournoi, { 'attr': {'class': 'form-control'} }) }}
+            </div>
+            <button type="submit" class="btn btn-success">Créer</button>
+        {{ form_end(form) }}
+
+        <a href="{{ path('app_equipe_index') }}" class="btn btn-secondary mt-3">Retour</a>
+    </div>
+{% endblock %}

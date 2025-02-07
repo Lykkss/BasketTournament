@@ -26,6 +26,9 @@
                             <a class="nav-link" href="{{ path('mes_tournois') }}">📋 Mes Tournois</a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="{{ path('mes_equipes') }}">👥 Mes Équipes</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link text-danger" href="{{ path('app_logout') }}">🚪 Déconnexion</a>
                         </li>
                     {% else %}
@@ -42,6 +45,24 @@
     </nav>
 
     <div class="container mt-4">
+        {% if app.user %}
+            {# Si l'utilisateur est connecté, affiche une version différente de la page d'accueil #}
+            <div class="alert alert-success text-center">
+                <h2>👋 Bienvenue, {{ app.user.prenom }} !</h2>
+                <p>Rejoignez un tournoi ou une équipe dès maintenant !</p>
+                <a href="{{ path('tournois_list') }}" class="btn btn-primary">Voir les Tournois</a>
+                <a href="{{ path('mes_equipes') }}" class="btn btn-secondary">Voir mes Équipes</a>
+            </div>
+        {% else %}
+            {# Page d'accueil par défaut pour les visiteurs #}
+            <div class="text-center">
+                <h1>🏀 Bienvenue sur Basket'Oll !</h1>
+                <p>Inscrivez-vous dès maintenant et participez à des tournois passionnants.</p>
+                <a href="{{ path('app_register') }}" class="btn btn-primary btn-lg">S'inscrire</a>
+                <a href="{{ path('tournois_list') }}" class="btn btn-outline-primary btn-lg">Explorer les Tournois</a>
+            </div>
+        {% endif %}
+
         {% block body %}{% endblock %}
     </div>
 

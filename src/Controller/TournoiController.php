@@ -52,36 +52,40 @@ class TournoiController extends AbstractController
     public function inscription(Tournoi $tournoi, EntityManagerInterface $entityManager): Response
     {
         $user = $this->getUser();
-
+    
         if (!$user) {
             $this->addFlash('danger', 'Vous devez être connecté pour vous inscrire à un tournoi.');
             return $this->redirectToRoute('app_login');
         }
-
-        // Vérifier si l'utilisateur est déjà inscrit
-        if ($tournoi->getParticipants()->contains($user)) {
-            $this->addFlash('warning', 'Vous êtes déjà inscrit à ce tournoi.');
-            return $this->redirectToRoute('mes_tournois');
+    
+        // Vérifier si l'utilisateur fait partie d'une équipe
+        $equipe = $user->getEquipes()->first();
+        if (!$equipe) {
+            $this->addFlash('warning', 'Vous devez appartenir à une équipe pour vous inscrire à un tournoi.');
+            return $this->redirectToRoute('app_equipe_index');
         }
-
+    
         // Vérifier si le tournoi est "À venir"
         if ($tournoi->getStatus() !== 'À venir') {
-            $this->addFlash('danger', 'Vous ne pouvez vous inscrire qu\'aux tournois "À venir".');
+            $this->addFlash('danger', 'Vous ne pouvez vous inscrire qu\'à un tournoi "À venir".');
             return $this->redirectToRoute('tournois_list');
         }
-
-        // ✅ Ajouter l'utilisateur au tournoi et vice versa
-        $tournoi->addParticipant($user);
-        $user->addTournoiInscrit($tournoi);
-
-        // ✅ Enregistrer uniquement l'utilisateur (pas besoin de persister le tournoi)
-        $entityManager->persist($user);
+    
+        // Vérifier si l'équipe est déjà inscrite
+        if ($tournoi->getEquipes()->contains($equipe)) {
+            $this->addFlash('warning', 'Votre équipe est déjà inscrite à ce tournoi.');
+            return $this->redirectToRoute('mes_tournois');
+        }
+    
+        // Inscription de l'équipe au tournoi
+        $tournoi->addEquipe($equipe);
+        $entityManager->persist($tournoi);
         $entityManager->flush();
-
-        $this->addFlash('success', 'Vous êtes inscrit au tournoi.');
-
+    
+        $this->addFlash('success', 'Votre équipe est inscrite au tournoi ' . $tournoi->getNom() . ' avec succès.');
         return $this->redirectToRoute('mes_tournois');
     }
+    
 
     #[Route('/tournoi/{id}/generate-matches', name: 'tournoi_generate_matches')]
 public function generateMatches(Tournoi $tournoi, EntityManagerInterface $entityManager): Response

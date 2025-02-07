@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de l'Équipe{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h2 class="mt-4">🏀 Détails de l'Équipe : {{ equipe.nom }}</h2>
+
+        <p><strong>Tournoi :</strong> {{ equipe.tournoi.nom }}</p>
+        <p><strong>Membres :</strong></p>
+
+        {% if equipe.getMembres is empty %}
+            <p class="text-muted">Aucun membre dans cette équipe.</p>
+        {% else %}
+            <ul>
+                {% for membre in equipe.getMembres %}
+                    <li>{{ membre.nom }} {{ membre.prenom }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <a href="{{ path('app_equipe_index') }}" class="btn btn-secondary mt-3">Retour</a>
+    </div>
+{% endblock %}
