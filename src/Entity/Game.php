@@ -70,7 +70,7 @@ class Game
     public function setScoreEquipeA(?int $scoreEquipeA): static
     {
         $this->scoreEquipeA = $scoreEquipeA;
-        $this->determineVainqueur();
+        $this->determineVainqueur();  // Appeler la méthode pour mettre à jour le vainqueur
         return $this;
     }
 
@@ -82,7 +82,7 @@ class Game
     public function setScoreEquipeB(?int $scoreEquipeB): static
     {
         $this->scoreEquipeB = $scoreEquipeB;
-        $this->determineVainqueur();
+        $this->determineVainqueur();  // Appeler la méthode pour mettre à jour le vainqueur
         return $this;
     }
 
@@ -110,6 +110,7 @@ class Game
 
     /**
      * 🔥 Détermine automatiquement le vainqueur du match.
+     * Appelée lorsque les scores sont modifiés pour déterminer l'équipe gagnante.
      */
     public function determineVainqueur(): void
     {

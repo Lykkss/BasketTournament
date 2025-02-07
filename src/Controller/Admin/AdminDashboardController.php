@@ -16,6 +16,11 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 class AdminDashboardController extends AbstractDashboardController
 {
     #[Route('/admin', name: 'admin_dashboard')]
+    public function dashboard(): Response
+    {
+        return $this->render('admin/dashboard.html.twig');
+    }
+    
     public function index(): Response
     {
         $adminUrlGenerator = $this->container->get(AdminUrlGenerator::class);

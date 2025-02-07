@@ -5,26 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Basket'Oll{% endblock %}</title>
 
-    {# Intégration de Bootstrap via CDN #}
+    {# Intégration de Bootstrap #}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
 <body>
 
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
-            <a class="navbar-brand">🏆 Basket'Oll</a>
+            <a class="navbar-brand" href="{{ path('app_home') }}">🏀 Basket'Oll</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    {# Liens pour un utilisateur connecté #}
                     {% if app.user %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ path('profile') }}">👤 Mon Profil</a>
+                            <a class="nav-link" href="{{ path('tournois_list') }}">🏆 Tournois</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ path('app_logout') }}">🚪 Déconnexion</a>
+                            <a class="nav-link" href="{{ path('profile_show') }}">👤 Mon Profil</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('mes_tournois') }}">📋 Mes Tournois</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('mes_equipes') }}">👥 Mes Équipes</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-danger" href="{{ path('app_logout') }}">🚪 Déconnexion</a>
+                        </li>
+                    {# Liens pour un utilisateur non connecté #}
                     {% else %}
                         <li class="nav-item">
                             <a class="nav-link" href="{{ path('app_login') }}">🔑 Connexion</a>
@@ -39,10 +50,27 @@
     </nav>
 
     <div class="container mt-4">
+        {% if app.user %}
+            <div class="alert alert-success text-center">
+                <h2>👋 Bienvenue, {{ app.user.prenom }} !</h2>
+                <p>Rejoignez un tournoi ou une équipe dès maintenant.</p>
+                <a href="{{ path('tournois_list') }}" class="btn btn-primary">Voir les Tournois</a>
+                <a href="{{ path('mes_equipes') }}" class="btn btn-secondary">Voir mes Équipes</a>
+            </div>
+        {% else %}
+            <div class="text-center">
+                <h1>🏀 Bienvenue sur Basket'Oll !</h1>
+                <p>Inscrivez-vous dès maintenant et participez à des tournois passionnants.</p>
+                <a href="{{ path('app_register') }}" class="btn btn-primary btn-lg">S'inscrire</a>
+                <a href="{{ path('tournois_list') }}" class="btn btn-outline-primary btn-lg">Explorer les Tournois</a>
+            </div>
+        {% endif %}
+        
         {% block body %}{% endblock %}
     </div>
 
-    {# Intégration de Bootstrap JS via CDN #}
+    {# Intégration de Bootstrap JS #}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
 </body>
 </html>

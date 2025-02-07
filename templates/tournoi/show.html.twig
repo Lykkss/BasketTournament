@@ -3,128 +3,98 @@
 {% block title %}Détails du Tournoi - {{ tournoi.nom }}{% endblock %}
 
 {% block body %}
-    <div class="container mt-5">
-        <h1 class="mb-4">{{ tournoi.nom }}</h1>
-        
-        <p><strong>Date de début :</strong> {{ tournoi.dateDebut|date('d/m/Y H:i') }}</p>
-        <p><strong>Date de fin :</strong> {{ tournoi.dateFin|date('d/m/Y H:i') }}</p>
-        <p><strong>Statut :</strong> 
-            <span class="badge 
-                {% if tournoi.status == 'À venir' %}bg-success
-                {% elseif tournoi.status == 'En cours' %}bg-warning
-                {% else %}bg-danger
-                {% endif %}">
-                {{ tournoi.status }}
-            </span>
-        </p>
-        <p><strong>Nombre max d'équipes :</strong> {{ tournoi.nbMaxEquipes }}</p>
-
-        {# Messages flash pour informer l'utilisateur #}
-        {% for message in app.flashes('success') %}
-            <div class="alert alert-success">{{ message }}</div>
-        {% endfor %}
-        {% for message in app.flashes('warning') %}
-            <div class="alert alert-warning">{{ message }}</div>
-        {% endfor %}
-        {% for message in app.flashes('danger') %}
-            <div class="alert alert-danger">{{ message }}</div>
-        {% endfor %}
-
-        {# Liste des participants #}
-        <h2 class="mt-4">👥 Participants</h2>
-        {% if tournoi.participants|length > 0 %}
-            <ul class="list-group">
-                {% for participant in tournoi.participants %}
-                    <li class="list-group-item">{{ participant.email }}</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>Aucun participant pour le moment.</p>
-        {% endif %}
-
-        {# Liste des équipes inscrites #}
-        <h2 class="mt-4">🏀 Équipes Participantes</h2>
-        {% if tournoi.equipes|length > 0 %}
-            <ul class="list-group">
-                {% for equipe in tournoi.equipes %}
-                    <li class="list-group-item">
-                        {{ equipe.nom }} ({{ equipe.membres|length }} membres)
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>Aucune équipe inscrite.</p>
-        {% endif %}
-
-        {# Affichage des matchs #}
-        {% if tournoi.games|length > 0 %}
-            <h2 class="mt-4">🏆 Matchs</h2>
-            <table class="table table-bordered">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Équipe A</th>
-                        <th>Score</th>
-                        <th>Équipe B</th>
-                        <th>Score</th>
-                        <th>Vainqueur</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for game in tournoi.games %}
-                        <tr>
-                            <td>{{ game.equipeA.nom }}</td>
-                            <td>{{ game.scoreEquipeA is not null ? game.scoreEquipeA : '-' }}</td>
-                            <td>{{ game.equipeB.nom }}</td>
-                            <td>{{ game.scoreEquipeB is not null ? game.scoreEquipeB : '-' }}</td>
-                            <td>
-                                {% if game.vainqueur is not null %}
-                                    🎉 {{ game.vainqueur.nom }}
-                                {% else %}
-                                    ⚠️ Pas encore joué
-                                {% endif %}
-                            </td>
-                            <td>
-                                <a href="{{ path('app_game_edit', { id: game.id }) }}" class="btn btn-sm btn-warning">
-                                    ✏️ Modifier
-                                </a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p class="mt-4">⚠️ Aucun match généré pour le moment.</p>
-        {% endif %}
-
-        {# 🔄 Bouton pour générer le tour suivant (uniquement si le tournoi est en cours) #}
-        {% if tournoi.status == 'En cours' %}
-            <div class="mt-4">
-                <a href="{{ path('generate_next_round', { id: tournoi.id }) }}" class="btn btn-primary">
-                    🔄 Générer le tour suivant
-                </a>
-            </div>
-        {% endif %}
-
-        {# 🏆 Bouton pour générer un tournoi final si tous les matchs des sous-tournois sont terminés #}
-        {% if tournoi.status == 'Terminé' and tournoi.parentTournoi is null %}
-            <div class="mt-4">
-                <a href="{{ path('generate_final_tournament', { id: tournoi.id }) }}" class="btn btn-danger">
-                    🏆 Générer un tournoi final
-                </a>
-            </div>
-        {% endif %}
-
-        {# 🎉 Affichage du gagnant final du tournoi #}
-        {% if tournoi.parentTournoi and tournoi.getChampionFinal() %}
-            <h2 class="mt-4 text-success">🏅 Champion du tournoi final</h2>
-            <p class="alert alert-success">🎉 Félicitations à <strong>{{ tournoi.getChampionFinal().nom }}</strong> !</p>
-        {% endif %}
-
-        {# Boutons pour revenir à la liste des tournois et voir le bracket #}
-        <div class="mt-4">
-            <a href="{{ path('tournois_list') }}" class="btn btn-secondary">Retour aux tournois</a>
-            <a href="{{ path('tournoi_bracket', { id: tournoi.id }) }}" class="btn btn-primary">Voir le bracket</a>
+<div class="container mt-4">
+    <h1 class="text-center">🏆 {{ tournoi.nom }}</h1>
+    
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <p><strong>📅 Date de début :</strong> {{ tournoi.dateDebut|date('d/m/Y H:i') }}</p>
+            <p><strong>🏁 Date de fin :</strong> {{ tournoi.dateFin|date('d/m/Y H:i') }}</p>
+            <p><strong>📊 Statut :</strong> 
+                <span class="badge {% if tournoi.status == 'À venir' %}bg-success{% elseif tournoi.status == 'En cours' %}bg-warning{% else %}bg-danger{% endif %}">
+                    {{ tournoi.status }}
+                </span>
+            </p>
+            <p><strong>👥 Nombre max d'équipes :</strong> {{ tournoi.nbMaxEquipes }}</p>
         </div>
     </div>
+
+    {# 🔹 Gestion de l'inscription #}
+    {% if app.user %}
+        <div class="mt-3">
+            {% if tournoi.participants.contains(app.user) %}
+                <form action="{{ path('tournoi_desinscription', { id: tournoi.id }) }}" method="POST">
+                    <button type="submit" class="btn btn-danger">❌ Se désinscrire</button>
+                </form>
+            {% elseif tournoi.status == 'À venir' %}
+                <form action="{{ path('tournoi_inscription', { id: tournoi.id }) }}" method="POST">
+                    <button type="submit" class="btn btn-success">✅ S'inscrire</button>
+                </form>
+            {% endif %}
+        </div>
+    {% else %}
+        <p class="text-muted">🔹 Connectez-vous pour vous inscrire au tournoi.</p>
+    {% endif %}
+
+    {# 🔹 Bouton pour générer les matchs (admin uniquement) #}
+    {% if is_granted('ROLE_ADMIN') and tournoi.status == 'À venir' %}
+        <a href="{{ path('tournoi_generate_matches', { id: tournoi.id }) }}" class="btn btn-primary mt-3">⚡ Générer les matchs</a>
+    {% endif %}
+
+    {# 🔹 Liste des participants #}
+    <h2 class="mt-4">👥 Participants</h2>
+    {% if tournoi.participants|length > 0 %}
+        <ul class="list-group">
+            {% for participant in tournoi.participants %}
+                <li class="list-group-item">{{ participant.email }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-muted">Aucun participant pour le moment.</p>
+    {% endif %}
+
+    {# 🔹 Affichage des matchs #}
+    <h2 class="mt-4">🏆 Matchs</h2>
+    {% if tournoi.games|length > 0 %}
+    <h2 class="mt-4">🏆 Matchs</h2>
+    <table class="table table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Équipe A</th>
+                <th>Score</th>
+                <th>Équipe B</th>
+                <th>Score</th>
+                <th>Vainqueur</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for game in tournoi.games %}
+                <tr>
+                    <td>{{ game.equipeA.nom }}</td>
+                    <td>{{ game.scoreEquipeA is not null ? game.scoreEquipeA : '-' }}</td>
+                    <td>{{ game.equipeB.nom }}</td>
+                    <td>{{ game.scoreEquipeB is not null ? game.scoreEquipeB : '-' }}</td>
+                    <td>
+                        {% if game.vainqueur is not null %}
+                            🎉 {{ game.vainqueur.nom }}
+                        {% else %}
+                            ⚠️ Pas encore joué
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p class="text-muted">⚠️ Aucun match généré pour le moment.</p>
+{% endif %}
+
+   
+    {# 🔹 Bouton pour voir le bracket du tournoi #}
+    <a href="{{ path('tournoi_bracket', { id: tournoi.id }) }}" class="btn btn-primary mt-3">📊 Voir le bracket</a>
+
+
+    {# 🔹 Bouton de retour aux tournois #}
+    <a href="{{ path('tournois_list') }}" class="btn btn-secondary mt-3">⬅️ Retour à la liste des tournois</a>
+</div>
 {% endblock %}

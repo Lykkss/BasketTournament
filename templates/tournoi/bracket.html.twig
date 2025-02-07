@@ -1,78 +1,84 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}🏆 Bracket du Tournoi - {{ tournoi.nom }}{% endblock %}
+{% block title %}Bracket - {{ tournoi.nom }}{% endblock %}
 
 {% block body %}
-    <div class="container mt-4">
-        <h2 class="text-center">🏆 Bracket du Tournoi : {{ tournoi.nom }}</h2>
-        <p class="text-center">
-            <strong>Statut :</strong> 
-            <span class="badge 
-                {% if tournoi.status == 'À venir' %}bg-success{% elseif tournoi.status == 'En cours' %}bg-warning{% else %}bg-danger{% endif %}">
-                {{ tournoi.status }}
-            </span>
-        </p>
+<div class="container mt-4">
+    <h1 class="text-center">🏆 Bracket du Tournoi - {{ tournoi.nom }}</h1>
 
-        {# Vérifier si des matchs existent #}
-        {% if matches is empty %}
-            <p class="text-muted text-center">Aucun match encore programmé pour ce tournoi.</p>
-        {% else %}
-            <div class="bracket-container mt-4">
-                {% for game in matches %}
-                    <div class="bracket-match">
-                        <div class="team {% if game.vainqueur == game.equipeA %} winner {% endif %}">
-                            {{ game.equipeA.nom }} ({{ game.scoreEquipeA is not null ? game.scoreEquipeA : '-' }})
-                        </div>
-                        <div class="team {% if game.vainqueur == game.equipeB %} winner {% endif %}">
-                            {{ game.equipeB.nom }} ({{ game.scoreEquipeB is not null ? game.scoreEquipeB : '-' }})
-                        </div>
-                        <div class="match-winner">
-                            {% if game.vainqueur %}
-                                🏅 Vainqueur : {{ game.vainqueur.nom }}
-                            {% else %}
-                                ⚠️ Match en attente
-                            {% endif %}
-                        </div>
+    {# Vérification s'il y a des matchs #}
+    {% if matches|length > 0 %}
+        <div class="bracket mt-4">
+            {% for match in matches %}
+                <div class="match-card">
+                    <div class="team">
+                        <span class="team-name">{{ match.equipeA.nom }}</span>
+                        <span class="team-score">{{ match.getScoreEquipeA() is not null ? match.getScoreEquipeA() : '-' }}</span>
                     </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-
-        <div class="text-center mt-4">
-            <a href="{{ path('tournoi_show', {'id': tournoi.id}) }}" class="btn btn-secondary">Retour au tournoi</a>
+                    <div class="vs">VS</div>
+                    <div class="team">
+                        <span class="team-name">{{ match.equipeB.nom }}</span>
+                        <span class="team-score">{{ match.getScoreEquipeB() is not null ? match.getScoreEquipeB() : '-' }}</span>
+                    </div>
+                    <div class="winner">
+                        {% if match.vainqueur %}
+                            🎉 <strong>Vainqueur :</strong> {{ match.vainqueur.nom }}
+                        {% else %}
+                            ⚠️ Match en attente
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
         </div>
-    </div>
+    {% else %}
+        <p class="text-muted text-center mt-4">⚠️ Aucun match généré pour ce tournoi.</p>
+    {% endif %}
 
-    <style>
-        .bracket-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .bracket-match {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            width: 300px;
-            text-align: center;
-            border-radius: 10px;
-            background: #f8f9fa;
-        }
-        .team {
-            font-weight: bold;
-            padding: 5px;
-        }
-        .winner {
-            background: #d4edda;
-            border-radius: 5px;
-        }
-        .match-winner {
-            margin-top: 10px;
-            font-weight: bold;
-            color: #28a745;
-        }
-    </style>
+    {# 🔹 Bouton de retour aux détails du tournoi #}
+    <a href="{{ path('tournoi_show', { id: tournoi.id }) }}" class="btn btn-secondary mt-3">⬅️ Retour au tournoi</a>
+</div>
+
+{# Styles pour le bracket #}
+<style>
+    .bracket {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .match-card {
+        border: 1px solid #ddd;
+        padding: 10px;
+        width: 400px;
+        margin-bottom: 15px;
+        text-align: center;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    .team {
+        display: flex;
+        justify-content: space-between;
+        font-size: 1.2em;
+        padding: 5px;
+    }
+    .vs {
+        font-weight: bold;
+        font-size: 1.5em;
+        margin: 10px 0;
+        color: #555;
+    }
+    .winner {
+        font-weight: bold;
+        color: #28a745;
+        margin-top: 10px;
+    }
+    .team-name {
+        font-weight: bold;
+    }
+    .team-score {
+        font-size: 1.5em;
+        font-weight: bold;
+    }
+</style>
+
 {% endblock %}

@@ -28,18 +28,18 @@ security:
 
             remember_me:
                 secret: '%kernel.secret%'
-                lifetime: 604800 # 1 semaine
+                lifetime: 604800 
                 path: /
 
     role_hierarchy:
-        ROLE_ADMIN: [ROLE_USER]  # ✅ Un admin a automatiquement les permissions d’un user
+        ROLE_ADMIN: [ROLE_USER]  
 
     access_control:
-        - { path: ^/admin, roles: ROLE_ADMIN }    # ✅ Admin uniquement
-        - { path: ^/matchs, roles: ROLE_USER }    # ✅ Matchs accessibles aux utilisateurs connectés
-        - { path: ^/tournois, roles: ROLE_USER }  # ✅ Tournois accessibles aux utilisateurs connectés
-        - { path: ^/login, roles: PUBLIC_ACCESS } # ✅ Page de connexion accessible à tous
-        - { path: ^/, roles: PUBLIC_ACCESS }      # ✅ Landing accessible à tous
+        - { path: ^/admin, roles: ROLE_ADMIN }   
+        - { path: ^/matchs, roles: ROLE_USER }    
+        - { path: ^/tournois, roles: ROLE_USER }  
+        - { path: ^/login, roles: PUBLIC_ACCESS } 
+        - { path: ^/, roles: PUBLIC_ACCESS }      
 
 when@test:
     security:

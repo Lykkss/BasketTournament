@@ -1,0 +1,71 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Bracket - {{ tournoi.nom }}{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <h1 class="text-center">🏆 Bracket du Tournoi - {{ tournoi.nom }}</h1>
+
+    <div class="bracket mt-4">
+        {% for match in matches %}
+    <div class="match-card" id="match-{{ match.id }}">
+        <div class="team">
+            <span class="team-name">{{ match.equipeA.nom }}</span>
+            <span class="team-score">{{ match.scoreEquipeA ?? '-' }}</span>
+        </div>
+        <div class="vs">VS</div>
+        <div class="team">
+            <span class="team-name">{{ match.equipeB.nom }}</span>
+            <span class="team-score">{{ match.scoreEquipeB ?? '-' }}</span>
+        </div>
+    </div>
+{% endfor %}
+
+    </div>
+
+    <a href="{{ path('tournoi_show', { id: tournoi.id }) }}" class="btn btn-secondary mt-3">⬅️ Retour au tournoi</a>
+    <button class="btn btn-success" onclick="window.location.href='{{ path('generate_next_round', {id: tournoi.id}) }}'">Générer le prochain tour</button>
+
+</div>
+
+{% block javascripts %}
+<script>
+    // Fonction pour mettre à jour les scores
+    document.querySelectorAll('.update-scores').forEach(button => {
+        button.addEventListener('click', function() {
+            const matchId = this.getAttribute('data-match-id');
+            const scoreEquipeA = prompt("Entrez le score de l'équipe A:");
+            const scoreEquipeB = prompt("Entrez le score de l'équipe B:");
+
+            if (scoreEquipeA !== null && scoreEquipeB !== null) {
+                // Mettre à jour les résultats dynamiquement via AJAX
+                fetch('/update-score', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        matchId: matchId,
+                        scoreEquipeA: parseInt(scoreEquipeA),
+                        scoreEquipeB: parseInt(scoreEquipeB)
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Mettre à jour l'interface avec les nouveaux scores
+                        document.querySelector(`#match-${matchId} .team .team-score:nth-child(2)`).textContent = scoreEquipeA;
+                        document.querySelector(`#match-${matchId} .team .team-score:nth-child(4)`).textContent = scoreEquipeB;
+                        alert("Scores mis à jour avec succès !");
+                    } else {
+                        alert("Erreur lors de la mise à jour des scores.");
+                    }
+                });
+            } else {
+                alert("Les scores doivent être remplis !");
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

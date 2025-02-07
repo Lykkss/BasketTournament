@@ -24,6 +24,31 @@ final class GameController extends AbstractController
         ]);
     }
 
+    #[Route('/{id}', name: 'app_game_show', methods: ['GET'])]
+    public function show(Game $game): Response
+    {
+        return $this->render('game/show.html.twig', [
+            'game' => $game,
+        ]);
+    }
+
+    #[Route('/{id}/edit', name: 'app_game_edit', methods: ['GET', 'POST'])]
+    public function edit(Game $game, Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $form = $this->createForm(GameType::class, $game);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+            return $this->redirectToRoute('app_game_show', ['id' => $game->getId()]);
+        }
+
+        return $this->render('game/edit.html.twig', [
+            'game' => $game,
+            'form' => $form->createView(),
+        ]);
+    }
+
     #[Route('/new', name: 'app_game_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
@@ -34,78 +59,43 @@ final class GameController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->persist($game);
             $entityManager->flush();
-
-            $this->addFlash('success', 'Le match a été créé avec succès.');
-            return $this->redirectToRoute('app_game_index');
+            return $this->redirectToRoute('app_game_show', ['id' => $game->getId()]);
         }
 
         return $this->render('game/new.html.twig', [
-            'game' => $game,
-            'form' => $form,
+            'form' => $form->createView(),
         ]);
     }
 
-    #[Route('/{id}', name: 'app_game_show', methods: ['GET'])]
-    public function show(Game $game): Response
-    {
-        return $this->render('game/show.html.twig', [
-            'game' => $game,
-        ]);
-    }
-
-    #[Route('/{id}/edit', name: 'app_game_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Game $game, EntityManagerInterface $entityManager): Response
-    {
-        $form = $this->createForm(GameType::class, $game);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
-            $this->addFlash('success', 'Le match a été mis à jour.');
-            return $this->redirectToRoute('app_game_index');
-        }
-
-        return $this->render('game/edit.html.twig', [
-            'game' => $game,
-            'form' => $form,
-        ]);
-    }
-
-    #[Route('/{id}', name: 'app_game_delete', methods: ['POST'])]
-    public function delete(Request $request, Game $game, EntityManagerInterface $entityManager): Response
-    {
-        if ($this->isCsrfTokenValid('delete'.$game->getId(), $request->request->get('_token'))) {
-            $entityManager->remove($game);
-            $entityManager->flush();
-            $this->addFlash('success', 'Le match a été supprimé.');
-        }
-
-        return $this->redirectToRoute('app_game_index');
-    }
-
-    /**
-     * 🔥 Génération automatique du prochain tour du tournoi
-     */
-    #[Route('/tournoi/{id}/generate-next-round', name: 'generate_next_round', methods: ['GET'])]
+    #[Route('/{id}/generate-next-round', name: 'generate_next_round', methods: ['GET'])]
 public function generateNextRound(Tournoi $tournoi, EntityManagerInterface $entityManager, GameRepository $gameRepository): Response
 {
-    // 1️⃣ Récupère les vainqueurs du tour précédent
-    $winnerIds = $gameRepository->getWinnersByTournoi($tournoi);
-
-    // 2️⃣ Vérifie qu'il y a au moins 2 vainqueurs
-    if (count($winnerIds) < 2) {
-        $this->addFlash('warning', 'Pas assez d’équipes qualifiées pour générer un nouveau tour.');
+    // 🔎 Vérifier si tous les matchs du tour précédent sont terminés
+    $matches = $gameRepository->findBy(['tournoi' => $tournoi, 'vainqueur' => null]);
+    if (count($matches) > 0) {
+        $this->addFlash('warning', 'Tous les matchs du tour actuel doivent être terminés avant de générer le prochain tour.');
         return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
     }
 
-    // 3️⃣ Récupérer les objets Equipe à partir des IDs
-    $winners = $entityManager->getRepository(Equipe::class)->findBy(['id' => $winnerIds]);
+    // 🔎 Récupérer les vainqueurs du tour précédent
+    $winners = [];
+    foreach ($tournoi->getGames() as $match) {
+        if ($match->getVainqueur()) {
+            $winners[] = $match->getVainqueur();
+        }
+    }
 
-    // 4️⃣ Mélange les gagnants pour éviter des répétitions de matchs
-    shuffle($winners);
+    // ❌ Vérifier qu'il y a bien des vainqueurs
+    if (count($winners) < 2) {
+        $this->addFlash('success', '🏆 Le tournoi est terminé ! Vainqueur : ' . $winners[0]->getNom());
+        return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
+    }
 
-    // 5️⃣ Génération des nouveaux matchs
+    // ✅ Mélanger les vainqueurs et générer les matchs du prochain tour
+    $winners = array_values($winners);
+    shuffle($winners);  // Mélanger les vainqueurs pour générer de nouveaux matchs
     $newMatches = [];
+
     for ($i = 0; $i < count($winners) - 1; $i += 2) {
         $game = new Game();
         $game->setEquipeA($winners[$i]);
@@ -115,44 +105,43 @@ public function generateNextRound(Tournoi $tournoi, EntityManagerInterface $enti
         $newMatches[] = $game;
     }
 
-    // 6️⃣ Vérifier s'il reste une équipe seule => elle est qualifiée d'office
+    // 🔄 Si un nombre impair d'équipes, une équipe est qualifiée d'office
     if (count($winners) % 2 === 1) {
         $qualifiedTeam = end($winners);
         $this->addFlash('info', "L'équipe {$qualifiedTeam->getNom()} est qualifiée automatiquement pour le prochain tour.");
     }
 
-    // 7️⃣ Sauvegarde en base de données
+    // 🔥 Sauvegarde en base et mise à jour du statut du tournoi
     $entityManager->flush();
-    
-    $this->addFlash('success', 'Le tour suivant du tournoi a été généré avec succès.');
+    $this->addFlash('success', 'Le prochain tour a été généré avec succès.');
+
     return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
 }
 
-    /**
-     * 🔥 Génération automatique du tournoi final
-     */
-    #[Route('/tournoi/{id}/generate-final', name: 'generate_final_tournament', methods: ['GET'])]
+
+#[Route('/{id}/generate-final', name: 'generate_final_tournament', methods: ['GET'])]
 public function generateFinalTournament(Tournoi $tournoi, EntityManagerInterface $entityManager, GameRepository $gameRepository): Response
 {
-    // 🔥 Vérifier si le tournoi a déjà un tournoi final
+    // Vérifie si le tournoi a déjà un tournoi final
     if ($tournoi->getParentTournoi() !== null) {
         $this->addFlash('warning', 'Ce tournoi est déjà un tournoi final.');
         return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
     }
 
-    // 🔎 Récupérer les vainqueurs des sous-tournois
-    $winnerIds = $gameRepository->getWinnersBySousTournois($tournoi);
+    // Récupère les vainqueurs des matchs du tournoi actuel
+    $winners = [];
+    foreach ($tournoi->getGames() as $match) {
+        if ($match->getVainqueur()) {
+            $winners[] = $match->getVainqueur();
+        }
+    }
 
-    // ❌ Vérifier qu'il y a bien des vainqueurs pour créer un tournoi final
-    if (count($winnerIds) < 2) {
+    if (count($winners) < 2) {
         $this->addFlash('warning', 'Pas assez d’équipes qualifiées pour un tournoi final.');
         return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
     }
 
-    // ✅ Récupérer les objets Equipe correspondants
-    $winners = $entityManager->getRepository(Equipe::class)->findBy(['id' => $winnerIds]);
-
-    // 🏆 Création du tournoi final
+    // Création du tournoi final
     $finalTournoi = new Tournoi();
     $finalTournoi->setNom('🏆 Tournoi Final - ' . $tournoi->getNom());
     $finalTournoi->setDateDebut(new \DateTimeImmutable());
@@ -161,7 +150,6 @@ public function generateFinalTournament(Tournoi $tournoi, EntityManagerInterface
     $finalTournoi->setNbMaxEquipes(count($winners));
     $finalTournoi->setParentTournoi($tournoi);
 
-    // 📌 Ajouter les équipes qualifiées au tournoi final
     foreach ($winners as $winner) {
         $finalTournoi->addParticipant($winner);
     }
@@ -172,4 +160,45 @@ public function generateFinalTournament(Tournoi $tournoi, EntityManagerInterface
     $this->addFlash('success', '🏆 Le tournoi final a été créé avec succès !');
     return $this->redirectToRoute('tournoi_show', ['id' => $finalTournoi->getId()]);
 }
+
+#[Route('/update-score', name: 'update_score', methods: ['POST'])]
+public function updateScore(Request $request, EntityManagerInterface $entityManager)
+{
+    // Logique pour traiter la mise à jour des scores via AJAX
+    $data = json_decode($request->getContent(), true);
+    $matchId = $data['matchId'];
+    $scoreEquipeA = $data['scoreEquipeA'];
+    $scoreEquipeB = $data['scoreEquipeB'];
+
+    $game = $entityManager->getRepository(Game::class)->find($matchId);
+    if ($game) {
+        $game->setScoreEquipeA($scoreEquipeA);
+        $game->setScoreEquipeB($scoreEquipeB);
+        $entityManager->flush();
+        return $this->json(['success' => true]);
+    }
+
+    return $this->json(['success' => false], 400);
+}
+
+
+    #[Route('/bracket/{id}', name: 'app_game_bracket', methods: ['GET'])]
+    public function bracket(Tournoi $tournoi, GameRepository $gameRepository): Response
+    {
+        $matches = $gameRepository->findBy(['tournoi' => $tournoi]);
+
+        return $this->render('game/bracket.html.twig', [
+            'tournoi' => $tournoi,
+            'matches' => $matches,
+        ]);
+    }
+
+    #[Route('/{id}/delete', name: 'app_game_delete', methods: ['POST'])]
+    public function delete(Game $game, EntityManagerInterface $entityManager): Response
+    {
+        $entityManager->remove($game);
+        $entityManager->flush();
+
+        return $this->redirectToRoute('app_game_index');
+    }
 }

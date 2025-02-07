@@ -25,9 +25,12 @@ class Equipe
     #[ORM\JoinTable(name: 'equipe_user')]
     private Collection $membres;
 
+
     #[ORM\ManyToOne(targetEntity: Tournoi::class, inversedBy: 'equipes')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Tournoi $tournoi = null;
+
+
 
     #[ORM\OneToMany(targetEntity: Game::class, mappedBy: 'equipeA', cascade: ['persist', 'remove'])]
     private Collection $gamesEquipeA;
