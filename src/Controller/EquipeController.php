@@ -10,7 +10,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 #[Route('/equipe')]
 final class EquipeController extends AbstractController
@@ -20,6 +19,21 @@ final class EquipeController extends AbstractController
     {
         return $this->render('equipe/index.html.twig', [
             'equipes' => $equipeRepository->findAll(),
+        ]);
+    }
+
+    #[Route('/mes-equipes', name: 'mes_equipes', methods: ['GET'])]
+    public function mesEquipes(): Response
+    {
+        $user = $this->getUser();
+
+        if (!$user) {
+            $this->addFlash('danger', 'Vous devez être connecté pour voir vos équipes.');
+            return $this->redirectToRoute('app_login');
+        }
+
+        return $this->render('equipe/mes_equipes.html.twig', [
+            'equipes' => $user->getEquipes(),
         ]);
     }
 
@@ -33,8 +47,6 @@ final class EquipeController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->persist($equipe);
             $entityManager->flush();
-
-            $this->addFlash('success', 'L\'équipe a été créée avec succès !');
             return $this->redirectToRoute('app_equipe_index');
         }
 
@@ -44,35 +56,22 @@ final class EquipeController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'app_equipe_show', requirements: ['id' => '\d+'], methods: ['GET'])]
-    public function show(EquipeRepository $equipeRepository, int $id): Response
+    #[Route('/{id}', name: 'app_equipe_show', methods: ['GET'])]
+    public function show(Equipe $equipe): Response
     {
-        $equipe = $equipeRepository->find($id);
-
-        if (!$equipe) {
-            throw new NotFoundHttpException("L'équipe demandée n'existe pas.");
-        }
-
         return $this->render('equipe/show.html.twig', [
             'equipe' => $equipe,
         ]);
     }
 
     #[Route('/{id}/edit', name: 'app_equipe_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, EquipeRepository $equipeRepository, EntityManagerInterface $entityManager, int $id): Response
+    public function edit(Request $request, Equipe $equipe, EntityManagerInterface $entityManager): Response
     {
-        $equipe = $equipeRepository->find($id);
-
-        if (!$equipe) {
-            throw new NotFoundHttpException("L'équipe demandée n'existe pas.");
-        }
-
         $form = $this->createForm(EquipeType::class, $equipe);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
-            $this->addFlash('success', 'L\'équipe a été mise à jour.');
             return $this->redirectToRoute('app_equipe_index');
         }
 
@@ -82,71 +81,28 @@ final class EquipeController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/delete', name: 'app_equipe_delete', methods: ['POST'])]
-    public function delete(Request $request, EquipeRepository $equipeRepository, EntityManagerInterface $entityManager, int $id): Response
-    {
-        $equipe = $equipeRepository->find($id);
+    #[Route('/{id}/quitter', name: 'equipe_quitter', methods: ['POST'])]
+public function quitterEquipe(Equipe $equipe, EntityManagerInterface $entityManager): Response
+{
+    $user = $this->getUser();
 
-        if (!$equipe) {
-            throw new NotFoundHttpException("L'équipe demandée n'existe pas.");
-        }
-
-        if ($this->isCsrfTokenValid('delete' . $equipe->getId(), $request->request->get('_token'))) {
-            try {
-                $entityManager->remove($equipe);
-                $entityManager->flush();
-                $this->addFlash('success', 'L\'équipe a été supprimée.');
-            } catch (\Exception $e) {
-                $this->addFlash('danger', 'Impossible de supprimer cette équipe. Vérifiez qu\'elle n\'est pas associée à un tournoi.');
-            }
-        }
-
-        return $this->redirectToRoute('app_equipe_index');
+    if (!$user) {
+        $this->addFlash('danger', 'Vous devez être connecté pour quitter une équipe.');
+        return $this->redirectToRoute('app_login');
     }
 
-    #[Route('/{id}/rejoindre', name: 'equipe_rejoindre', methods: ['POST'])]
-    public function rejoindreEquipe(EquipeRepository $equipeRepository, EntityManagerInterface $entityManager, int $id): Response
-    {
-        $user = $this->getUser();
-
-        if (!$user) {
-            $this->addFlash('danger', 'Vous devez être connecté pour rejoindre une équipe.');
-            return $this->redirectToRoute('app_login');
-        }
-
-        $equipe = $equipeRepository->find($id);
-
-        if (!$equipe) {
-            throw new NotFoundHttpException("L'équipe demandée n'existe pas.");
-        }
-
-        if ($equipe->getMembres()->contains($user)) {
-            $this->addFlash('warning', 'Vous faites déjà partie de cette équipe.');
-            return $this->redirectToRoute('app_equipe_index');
-        }
-
-        $equipe->addMembre($user);
-        $entityManager->persist($equipe);
-        $entityManager->flush();
-
-        $this->addFlash('success', 'Vous avez rejoint l\'équipe ' . $equipe->getNom() . ' avec succès.');
-        return $this->redirectToRoute('app_equipe_index');
+    // Vérifie si l'utilisateur est bien membre de l'équipe
+    if (!$equipe->getMembres()->contains($user)) {
+        $this->addFlash('warning', 'Vous ne faites pas partie de cette équipe.');
+        return $this->redirectToRoute('mes_equipes');
     }
 
-    #[Route('/mes-equipes', name: 'mes_equipes', methods: ['GET'])]
-    public function mesEquipes(): Response
-    {
-        $user = $this->getUser();
+    // Retirer l'utilisateur de l'équipe
+    $equipe->removeMembre($user);
+    $entityManager->flush();
 
-        if (!$user) {
-            $this->addFlash('danger', 'Vous devez être connecté pour voir vos équipes.');
-            return $this->redirectToRoute('app_login');
-        }
+    $this->addFlash('success', 'Vous avez quitté l\'équipe ' . $equipe->getNom());
+    return $this->redirectToRoute('mes_equipes');
+}
 
-        $equipes = $user->getEquipes();
-
-        return $this->render('equipe/mes_equipes.html.twig', [
-            'equipes' => $equipes,
-        ]);
-    }
 }

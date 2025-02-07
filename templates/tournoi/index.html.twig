@@ -3,19 +3,30 @@
 {% block title %}Liste des Tournois{% endblock %}
 
 {% block body %}
-    <h2>Tournois</h2>
-    <form method="get" action="{{ path('tournois_list') }}">
-        <select name="status" onchange="this.form.submit()">
-            <option value="Tous" {% if status == 'Tous' %}selected{% endif %}>Tous</option>
-            <option value="À venir" {% if status == 'À venir' %}selected{% endif %}>À venir</option>
-            <option value="En cours" {% if status == 'En cours' %}selected{% endif %}>En cours</option>
-            <option value="Terminé" {% if status == 'Terminé' %}selected{% endif %}>Terminé</option>
-        </select>
-    </form>
-    
-    <ul>
-        {% for tournoi in tournois %}
-            <li>{{ tournoi.nom }} - {{ tournoi.status }}</li>
-        {% endfor %}
-    </ul>
+    <div class="container">
+        <h2 class="mt-4">🏆 Tournois</h2>
+
+        {% if tournois is empty %}
+            <p class="text-muted">Aucun tournoi disponible.</p>
+        {% else %}
+            <div class="row">
+                {% for tournoi in tournois %}
+                    <div class="col-md-4">
+                        <div class="card shadow-sm mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ tournoi.nom }}</h5>
+                                <p class="card-text">
+                                    <strong>Date :</strong> {{ tournoi.dateDebut|date('d/m/Y') }} - {{ tournoi.dateFin|date('d/m/Y') }}<br>
+                                    <strong>Statut :</strong> <span class="badge bg-info">{{ tournoi.status }}</span>
+                                </p>
+                                <a href="{{ path('tournoi_show', {'id': tournoi.id}) }}" class="btn btn-primary btn-sm">
+                                    Voir Détails
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}

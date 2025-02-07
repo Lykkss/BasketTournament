@@ -1,15 +1,19 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Détails du Tournoi{% endblock %}
+{% block title %}Détails du Tournoi - {{ tournoi.nom }}{% endblock %}
 
 {% block body %}
     <div class="container mt-5">
-        <h1>{{ tournoi.nom }}</h1>
+        <h1 class="mb-4">{{ tournoi.nom }}</h1>
         
         <p><strong>Date de début :</strong> {{ tournoi.dateDebut|date('d/m/Y H:i') }}</p>
         <p><strong>Date de fin :</strong> {{ tournoi.dateFin|date('d/m/Y H:i') }}</p>
         <p><strong>Statut :</strong> 
-            <span class="badge {% if tournoi.status == 'À venir' %}bg-success{% elseif tournoi.status == 'En cours' %}bg-warning{% else %}bg-danger{% endif %}">
+            <span class="badge 
+                {% if tournoi.status == 'À venir' %}bg-success
+                {% elseif tournoi.status == 'En cours' %}bg-warning
+                {% else %}bg-danger
+                {% endif %}">
                 {{ tournoi.status }}
             </span>
         </p>
@@ -36,6 +40,20 @@
             </ul>
         {% else %}
             <p>Aucun participant pour le moment.</p>
+        {% endif %}
+
+        {# Liste des équipes inscrites #}
+        <h2 class="mt-4">🏀 Équipes Participantes</h2>
+        {% if tournoi.equipes|length > 0 %}
+            <ul class="list-group">
+                {% for equipe in tournoi.equipes %}
+                    <li class="list-group-item">
+                        {{ equipe.nom }} ({{ equipe.membres|length }} membres)
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Aucune équipe inscrite.</p>
         {% endif %}
 
         {# Affichage des matchs #}
@@ -104,7 +122,9 @@
         {% endif %}
 
         {# Boutons pour revenir à la liste des tournois et voir le bracket #}
-        <a href="{{ path('tournois_list') }}" class="btn btn-secondary mt-3">Retour aux tournois</a>
-        <a href="{{ path('tournoi_bracket', { id: tournoi.id }) }}" class="btn btn-primary mt-3">Voir le bracket</a>
+        <div class="mt-4">
+            <a href="{{ path('tournois_list') }}" class="btn btn-secondary">Retour aux tournois</a>
+            <a href="{{ path('tournoi_bracket', { id: tournoi.id }) }}" class="btn btn-primary">Voir le bracket</a>
+        </div>
     </div>
 {% endblock %}

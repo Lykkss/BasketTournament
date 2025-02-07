@@ -1,0 +1,29 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon Profil{% endblock %}
+
+{% block body %}
+<div class="container">
+    <h2 class="mt-4">👤 Mon Profil</h2>
+    <ul class="list-group">
+        <li class="list-group-item"><strong>Nom :</strong> {{ user.nom }}</li>
+        <li class="list-group-item"><strong>Prénom :</strong> {{ user.prenom }}</li>
+        <li class="list-group-item"><strong>Email :</strong> {{ user.email }}</li>
+    </ul>
+
+    <a href="{{ path('profile_edit') }}" class="btn btn-primary mt-3">Modifier mon profil</a>
+
+    <h3 class="mt-4">📋 Mes Tournois</h3>
+    {% if user.getTournoisInscrits() is empty %}
+        <p class="text-muted">Vous n'êtes inscrit à aucun tournoi.</p>
+    {% else %}
+        <ul class="list-group">
+            {% for tournoi in user.getTournoisInscrits() %}
+                <li class="list-group-item">
+                    <a href="{{ path('tournoi_show', {'id': tournoi.id}) }}">{{ tournoi.nom }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+{% endblock %}

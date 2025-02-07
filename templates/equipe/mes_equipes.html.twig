@@ -12,16 +12,32 @@
             <div class="row">
                 {% for equipe in equipes %}
                     <div class="col-md-4">
-                        <div class="card mb-3">
+                        <div class="card shadow-sm mb-3">
                             <div class="card-body">
-                                <h5 class="card-title">{{ equipe.nom }}</h5>
+                                <h5 class="card-title">🏀 {{ equipe.nom }}</h5>
                                 <p class="card-text">
                                     <strong>Tournoi :</strong> {{ equipe.tournoi.nom }}<br>
-                                    <strong>Membres :</strong> {{ equipe.getMembres|length }}
+                                    <strong>Membres :</strong> {{ equipe.membres|length }}
                                 </p>
-                                <a href="{{ path('app_equipe_show', {'id': equipe.id}) }}" class="btn btn-primary">
-                                    Voir l'équipe
-                                </a>
+
+                                {# Afficher la liste des membres #}
+                                <ul class="list-group list-group-flush">
+                                    {% for membre in equipe.membres %}
+                                        <li class="list-group-item">{{ membre.nom }} {{ membre.prenom }}</li>
+                                    {% endfor %}
+                                </ul>
+
+                                <div class="mt-3">
+                                    <a href="{{ path('app_equipe_show', {'id': equipe.id}) }}" class="btn btn-primary btn-sm">
+                                        Voir l'équipe
+                                    </a>
+
+                                    {# Vérification pour afficher le bouton "Quitter l'équipe" #}
+                                    <form method="post" action="{{ path('equipe_quitter', {'id': equipe.id}) }}" class="d-inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('quitter' ~ equipe.id) }}">
+                                        <button type="submit" class="btn btn-danger btn-sm">Quitter l'équipe</button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
