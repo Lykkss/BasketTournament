@@ -1,0 +1,34 @@
+{% block body %}
+<div class="container mt-4">
+    <h1 class="text-center">🏆 Bracket du Tournoi - {{ tournoi.nom }}</h1>
+
+    <div id="bracket-container">
+        {% for match in matches %}
+        <div id="match-{{ match.id }}" class="match">
+            <div class="team">
+                <span class="team-name">{{ match.equipeA.nom }}</span>
+                <span class="team-score">{{ match.scoreEquipeA ?? '-' }}</span>
+            </div>
+            <div class="vs">VS</div>
+            <div class="team">
+                <span class="team-name">{{ match.equipeB.nom }}</span>
+                <span class="team-score">{{ match.scoreEquipeB ?? '-' }}</span>
+            </div>
+            <div class="winner">
+                {% if match.vainqueur %}
+                    🎉 <strong>Vainqueur :</strong> {{ match.vainqueur.nom }}
+                {% else %}
+                    ⚠️ Match en attente
+                {% endif %}
+            </div>
+            <button onclick="updateMatchResults({{ match.id }})">Mettre à jour les scores</button>
+        </div>
+        {% endfor %}
+    </div>
+    <a href="{{ path('app_game_show', { 'id': game.id }) }}">Voir le jeu</a>
+    <a href="{{ path('app_tournoi_show', { 'id': tournoi.id }) }}">Voir le tournoi</a>
+    <a href="{{ path('tournoi_show', { id: tournoi.id }) }}" class="btn btn-secondary mt-3">⬅️ Retour au tournoi</a>
+</div>
+
+<script src="{{ asset('js/bracket.js') }}"></script>
+{% endblock %}

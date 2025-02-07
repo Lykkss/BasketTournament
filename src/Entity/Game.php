@@ -35,9 +35,6 @@ class Game
     #[ORM\JoinColumn(nullable: false)]
     private ?Tournoi $tournoi = null;
 
-
-
-
     public function getId(): ?int
     {
         return $this->id;
@@ -73,7 +70,7 @@ class Game
     public function setScoreEquipeA(?int $scoreEquipeA): static
     {
         $this->scoreEquipeA = $scoreEquipeA;
-        $this->determineVainqueur();
+        $this->determineVainqueur();  // Appeler la méthode pour mettre à jour le vainqueur
         return $this;
     }
 
@@ -85,7 +82,7 @@ class Game
     public function setScoreEquipeB(?int $scoreEquipeB): static
     {
         $this->scoreEquipeB = $scoreEquipeB;
-        $this->determineVainqueur();
+        $this->determineVainqueur();  // Appeler la méthode pour mettre à jour le vainqueur
         return $this;
     }
 

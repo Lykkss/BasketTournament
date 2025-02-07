@@ -13,12 +13,12 @@
                 <div class="match-card">
                     <div class="team">
                         <span class="team-name">{{ match.equipeA.nom }}</span>
-                        <span class="team-score">{{ match.scoreEquipeA is not null ? match.scoreEquipeA : '-' }}</span>
+                        <span class="team-score">{{ match.getScoreEquipeA() is not null ? match.getScoreEquipeA() : '-' }}</span>
                     </div>
                     <div class="vs">VS</div>
                     <div class="team">
                         <span class="team-name">{{ match.equipeB.nom }}</span>
-                        <span class="team-score">{{ match.scoreEquipeB is not null ? match.scoreEquipeB : '-' }}</span>
+                        <span class="team-score">{{ match.getScoreEquipeB() is not null ? match.getScoreEquipeB() : '-' }}</span>
                     </div>
                     <div class="winner">
                         {% if match.vainqueur %}
@@ -53,6 +53,7 @@
         text-align: center;
         background-color: #f8f9fa;
         border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
     .team {
         display: flex;
@@ -64,10 +65,19 @@
         font-weight: bold;
         font-size: 1.5em;
         margin: 10px 0;
+        color: #555;
     }
     .winner {
         font-weight: bold;
         color: #28a745;
+        margin-top: 10px;
+    }
+    .team-name {
+        font-weight: bold;
+    }
+    .team-score {
+        font-size: 1.5em;
+        font-weight: bold;
     }
 </style>
 
