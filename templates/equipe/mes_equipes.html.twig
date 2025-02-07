@@ -33,10 +33,13 @@
                                     </a>
 
                                     {# Vérification pour afficher le bouton "Quitter l'équipe" #}
-                                    <form method="post" action="{{ path('equipe_quitter', {'id': equipe.id}) }}" class="d-inline">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('quitter' ~ equipe.id) }}">
-                                        <button type="submit" class="btn btn-danger btn-sm">Quitter l'équipe</button>
+                                    <form action="{{ path('equipe_quitter', { 'id': equipe.id }) }}" method="POST" class="d-inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('quitter_equipe_' ~ equipe.id) }}">
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Êtes-vous sûr de vouloir quitter cette équipe ?');">
+                                            ❌ Quitter l'équipe
+                                        </button>
                                     </form>
+
                                 </div>
                             </div>
                         </div>

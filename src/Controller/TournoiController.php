@@ -15,22 +15,23 @@ use Symfony\Component\Routing\Annotation\Route;
 class TournoiController extends AbstractController
 {
     #[Route('/', name: 'tournois_list', methods: ['GET'])]
-    public function index(EntityManagerInterface $entityManager, Request $request): Response
-    {
-        $status = $request->query->get('status', 'Tous');
-        $queryBuilder = $entityManager->getRepository(Tournoi::class)->createQueryBuilder('t');
+public function index(EntityManagerInterface $entityManager, Request $request): Response
+{
+    $status = $request->query->get('status', 'Tous'); // Valeur par défaut : "Tous"
+    $queryBuilder = $entityManager->getRepository(Tournoi::class)->createQueryBuilder('t');
 
-        if ($status !== 'Tous') {
-            $queryBuilder->where('t.status = :status')->setParameter('status', $status);
-        }
-
-        $tournois = $queryBuilder->getQuery()->getResult();
-
-        return $this->render('tournoi/index.html.twig', [
-            'tournois' => $tournois,
-            'status' => $status,
-        ]);
+    if ($status !== 'Tous') {
+        $queryBuilder->where('t.status = :status')->setParameter('status', $status);
     }
+
+    $tournois = $queryBuilder->getQuery()->getResult();
+
+    return $this->render('tournoi/index.html.twig', [
+        'tournois' => $tournois,
+        'status' => $status,
+    ]);
+}
+
 
     #[Route('/{id}', name: 'tournoi_show', requirements: ['id' => '\d+'], methods: ['GET'])]
     public function show(Tournoi $tournoi): Response
@@ -73,12 +74,18 @@ class TournoiController extends AbstractController
     }
 
     #[Route('/{id}/bracket', name: 'tournoi_bracket', methods: ['GET'])]
-    public function bracket(Tournoi $tournoi): Response
+    public function bracket(Tournoi $tournoi, EntityManagerInterface $entityManager): Response
     {
+        // Récupération des matchs du tournoi
+        $matches = $entityManager->getRepository(Game::class)
+            ->findBy(['tournoi' => $tournoi], ['id' => 'ASC']);
+
         return $this->render('tournoi/bracket.html.twig', [
             'tournoi' => $tournoi,
+            'matches' => $matches,
         ]);
     }
+
 
     #[Route('/mes-tournois', name: 'mes_tournois', methods: ['GET'])]
     public function mesTournois(EntityManagerInterface $entityManager): Response

@@ -56,7 +56,7 @@ final class EquipeController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'app_equipe_show', methods: ['GET'])]
+    #[Route('/show/{id}', name: 'app_equipe_show', methods: ['GET'])]
     public function show(Equipe $equipe): Response
     {
         return $this->render('equipe/show.html.twig', [
@@ -82,13 +82,19 @@ final class EquipeController extends AbstractController
     }
 
     #[Route('/{id}/quitter', name: 'equipe_quitter', methods: ['POST'])]
-public function quitterEquipe(Equipe $equipe, EntityManagerInterface $entityManager): Response
+public function quitterEquipe(Request $request, Equipe $equipe, EntityManagerInterface $entityManager): Response
 {
     $user = $this->getUser();
 
     if (!$user) {
         $this->addFlash('danger', 'Vous devez être connecté pour quitter une équipe.');
         return $this->redirectToRoute('app_login');
+    }
+
+    // Vérification du token CSRF
+    if (!$this->isCsrfTokenValid('quitter_equipe_' . $equipe->getId(), $request->request->get('_token'))) {
+        $this->addFlash('danger', 'Token CSRF invalide.');
+        return $this->redirectToRoute('mes_equipes');
     }
 
     // Vérifie si l'utilisateur est bien membre de l'équipe
@@ -99,10 +105,45 @@ public function quitterEquipe(Equipe $equipe, EntityManagerInterface $entityMana
 
     // Retirer l'utilisateur de l'équipe
     $equipe->removeMembre($user);
+    $entityManager->persist($equipe);
     $entityManager->flush();
 
     $this->addFlash('success', 'Vous avez quitté l\'équipe ' . $equipe->getNom());
     return $this->redirectToRoute('mes_equipes');
 }
 
+
+#[Route('/{id}/rejoindre', name: 'equipe_rejoindre', methods: ['POST'])]
+public function rejoindreEquipe(Request $request, Equipe $equipe, EntityManagerInterface $entityManager): Response
+{
+    $user = $this->getUser();
+
+    if (!$user) {
+        $this->addFlash('danger', 'Vous devez être connecté pour rejoindre une équipe.');
+        return $this->redirectToRoute('app_login');
+    }
+
+    // Vérification du token CSRF
+    if (!$this->isCsrfTokenValid('rejoindre_equipe_' . $equipe->getId(), $request->request->get('_token'))) {
+        $this->addFlash('danger', 'Token CSRF invalide.');
+        return $this->redirectToRoute('app_equipe_index');
+    }
+
+    // Vérifier si l'utilisateur est déjà dans une équipe de ce tournoi
+    $tournoi = $equipe->getTournoi();
+    foreach ($user->getEquipes() as $existingEquipe) {
+        if ($existingEquipe->getTournoi() === $tournoi) {
+            $this->addFlash('warning', '⚠️ Vous êtes déjà dans une équipe de ce tournoi.');
+            return $this->redirectToRoute('app_equipe_index');
+        }
+    }
+
+    // Ajouter l'utilisateur à l'équipe
+    $equipe->addMembre($user);
+    $entityManager->persist($equipe);
+    $entityManager->flush();
+
+    $this->addFlash('success', 'Vous avez rejoint l\'équipe ' . $equipe->getNom() . ' avec succès.');
+    return $this->redirectToRoute('app_equipe_index');
+}
 }
