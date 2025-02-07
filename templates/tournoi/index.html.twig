@@ -3,19 +3,52 @@
 {% block title %}Liste des Tournois{% endblock %}
 
 {% block body %}
-    <h2>Tournois</h2>
-    <form method="get" action="{{ path('tournois_list') }}">
-        <select name="status" onchange="this.form.submit()">
-            <option value="Tous" {% if status == 'Tous' %}selected{% endif %}>Tous</option>
-            <option value="À venir" {% if status == 'À venir' %}selected{% endif %}>À venir</option>
-            <option value="En cours" {% if status == 'En cours' %}selected{% endif %}>En cours</option>
-            <option value="Terminé" {% if status == 'Terminé' %}selected{% endif %}>Terminé</option>
-        </select>
-    </form>
-    
-    <ul>
-        {% for tournoi in tournois %}
-            <li>{{ tournoi.nom }} - {{ tournoi.status }}</li>
-        {% endfor %}
-    </ul>
+    <div class="container mt-4">
+        <h2>🏆 Tournois</h2>
+
+        <!-- Onglets pour filtrer les tournois -->
+        <ul class="nav nav-tabs">
+            <li class="nav-item">
+                <a class="nav-link {% if status == 'Tous' %}active{% endif %}" href="{{ path('tournois_list', {status: 'Tous'}) }}">🌍 Tous</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if status == 'À venir' %}active{% endif %}" href="{{ path('tournois_list', {status: 'À venir'}) }}">⏳ À venir</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if status == 'En cours' %}active{% endif %}" href="{{ path('tournois_list', {status: 'En cours'}) }}">🔥 En cours</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if status == 'Terminé' %}active{% endif %}" href="{{ path('tournois_list', {status: 'Terminé'}) }}">🏁 Terminé</a>
+            </li>
+        </ul>
+
+        <!-- Liste des tournois -->
+        <div class="mt-3">
+            {% if tournois is empty %}
+                <p class="text-muted">Aucun tournoi trouvé.</p>
+            {% else %}
+                <div class="row">
+                    {% for tournoi in tournois %}
+                        <div class="col-md-4">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ tournoi.nom }}</h5>
+                                    <p class="card-text">
+                                        <strong>Début :</strong> {{ tournoi.dateDebut|date('d/m/Y H:i') }}<br>
+                                        <strong>Fin :</strong> {{ tournoi.dateFin|date('d/m/Y H:i') }}<br>
+                                        <strong>Statut :</strong> 
+                                        <span class="badge 
+                                            {% if tournoi.status == 'À venir' %}bg-success{% elseif tournoi.status == 'En cours' %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ tournoi.status }}
+                                        </span>
+                                    </p>
+                                    <a href="{{ path('tournoi_show', {'id': tournoi.id}) }}" class="btn btn-primary">Voir le tournoi</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
 {% endblock %}

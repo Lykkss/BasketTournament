@@ -30,8 +30,8 @@ class Tournoi
     #[ORM\Column(length: 255)]
     private ?string $status = null;
 
-    #[ORM\Column]
-    private ?int $nbMaxEquipes = null;
+    #[ORM\Column(type:"integer")]
+    private ?int $nbMaxEquipes = 4;
 
     #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'tournoisInscrits')]
     private Collection $participants;
@@ -57,6 +57,11 @@ class Tournoi
         $this->games = new ArrayCollection();
         $this->sousTournois = new ArrayCollection();
         $this->equipes = new ArrayCollection(); // ✅ Correction pour éviter l'erreur de mapping
+    }
+    
+    public function __toString(): string
+    {
+        return $this->nom; // ✅ Retourne le nom du tournoi pour l'affichage dans EasyAdmin
     }
 
     public function getId(): ?int

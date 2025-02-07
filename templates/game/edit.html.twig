@@ -3,33 +3,23 @@
 {% block title %}Modifier le Match{% endblock %}
 
 {% block body %}
-    <div class="container">
-        <h1>Modifier le Match</h1>
+    <div class="container mt-5">
+        <h2>Modifier le Match : {{ game.equipeA.nom }} 🆚 {{ game.equipeB.nom }}</h2>
 
         {{ form_start(form) }}
             <div class="mb-3">
-                <label class="form-label">Équipe A</label>
-                {{ form_widget(form.equipeA) }}
+                {{ form_label(form.scoreEquipeA) }}
+                {{ form_widget(form.scoreEquipeA, {'attr': {'class': 'form-control'}}) }}
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Score Équipe A</label>
-                {{ form_widget(form.scoreEquipeA) }}
+                {{ form_label(form.scoreEquipeB) }}
+                {{ form_widget(form.scoreEquipeB, {'attr': {'class': 'form-control'}}) }}
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">Équipe B</label>
-                {{ form_widget(form.equipeB) }}
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Score Équipe B</label>
-                {{ form_widget(form.scoreEquipeB) }}
-            </div>
-
-            <button type="submit" class="btn btn-success">✅ Enregistrer</button>
+            <button type="submit" class="btn btn-success">💾 Enregistrer</button>
         {{ form_end(form) }}
 
-        <a href="{{ path('app_game_index') }}" class="btn btn-secondary mt-3">Retour</a>
+        <a href="{{ path('tournoi_show', { id: game.tournoi.id }) }}" class="btn btn-secondary mt-3">Retour</a>
     </div>
 {% endblock %}

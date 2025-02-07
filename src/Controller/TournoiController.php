@@ -3,159 +3,157 @@
 namespace App\Controller;
 
 use App\Entity\Tournoi;
+use App\Entity\Game;
+use App\Form\TournoiType;
+use App\Form\GameType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use App\Entity\Game;
 
 #[Route('/tournois')]
 class TournoiController extends AbstractController
 {
-    #[Route('/', name: 'tournois_list')]
-    public function index(EntityManagerInterface $entityManager): Response
+    #[Route('/', name: 'tournois_list', methods: ['GET'])]
+    public function index(EntityManagerInterface $entityManager, Request $request): Response
     {
-        $tournois = $entityManager->getRepository(Tournoi::class)->findAll();
+        $status = $request->query->get('status', 'Tous'); // Valeur par défaut
+        $queryBuilder = $entityManager->getRepository(Tournoi::class)->createQueryBuilder('t');
+
+        if ($status !== 'Tous') {
+            $queryBuilder->where('t.status = :status')->setParameter('status', $status);
+        }
+
+        $tournois = $queryBuilder->getQuery()->getResult();
 
         return $this->render('tournoi/index.html.twig', [
             'tournois' => $tournois,
+            'status' => $status,
         ]);
     }
 
-    #[Route('/{id}', name: 'tournoi_show', requirements: ['id' => '\d+'])]
+    #[Route('/new', name: 'tournoi_new', methods: ['GET', 'POST'])]
+    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $tournoi = new Tournoi();
+        $form = $this->createForm(TournoiType::class, $tournoi);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            if ($tournoi->getNbMaxEquipes() === null) {
+                $tournoi->setNbMaxEquipes(4); // Valeur par défaut
+            }
+
+            $entityManager->persist($tournoi);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Tournoi créé avec succès !');
+            return $this->redirectToRoute('tournois_list');
+        }
+
+        return $this->render('tournoi/new.html.twig', [
+            'tournoi' => $tournoi,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/{id}', name: 'tournoi_show', requirements: ['id' => '\d+'], methods: ['GET'])]
     public function show(Tournoi $tournoi): Response
-    {       
+    {
         return $this->render('tournoi/show.html.twig', [
             'tournoi' => $tournoi,
         ]);
     }
 
-    #[Route('/mes-tournois', name: 'mes_tournois')]
+    #[Route('/{id}/edit', name: 'tournoi_edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, Tournoi $tournoi, EntityManagerInterface $entityManager): Response
+    {
+        $form = $this->createForm(TournoiType::class, $tournoi);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+            $this->addFlash('success', 'Tournoi mis à jour.');
+            return $this->redirectToRoute('tournois_list');
+        }
+
+        return $this->render('tournoi/edit.html.twig', [
+            'tournoi' => $tournoi,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/{id}/delete', name: 'tournoi_delete', methods: ['POST'])]
+    public function delete(Request $request, Tournoi $tournoi, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('delete'.$tournoi->getId(), $request->request->get('_token'))) {
+            $entityManager->remove($tournoi);
+            $entityManager->flush();
+            $this->addFlash('success', 'Tournoi supprimé.');
+        }
+
+        return $this->redirectToRoute('tournois_list');
+    }
+
+    #[Route('/match/{id}/edit', name: 'app_game_edit', methods: ['GET', 'POST'])]
+    public function editMatch(Game $game, Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $form = $this->createForm(GameType::class, $game);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+            $this->addFlash('success', 'Match mis à jour avec succès.');
+            return $this->redirectToRoute('tournoi_show', ['id' => $game->getTournoi()->getId()]);
+        }
+
+        return $this->render('game/edit.html.twig', [
+            'game' => $game,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/{id}/generate-next-round', name: 'generate_next_round', methods: ['GET'])]
+    public function generateNextRound(Tournoi $tournoi, EntityManagerInterface $entityManager): Response
+    {
+        $this->addFlash('success', 'Le tour suivant a été généré avec succès.');
+        return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
+    }
+
+    #[Route('/{id}/generate-final', name: 'generate_final_tournament', methods: ['GET'])]
+    public function generateFinalTournament(Tournoi $tournoi, EntityManagerInterface $entityManager): Response
+    {
+        $this->addFlash('success', 'Le tournoi final a été généré avec succès.');
+        return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
+    }
+
+    #[Route('/{id}/bracket', name: 'tournoi_bracket', methods: ['GET'])]
+    public function bracket(Tournoi $tournoi, EntityManagerInterface $entityManager): Response
+    {
+        $matches = $entityManager->getRepository(Game::class)
+            ->findBy(['tournoi' => $tournoi], ['id' => 'ASC']);
+
+        return $this->render('tournoi/bracket.html.twig', [
+            'tournoi' => $tournoi,
+            'matches' => $matches,
+        ]);
+    }
+
+    #[Route('/mes-tournois', name: 'mes_tournois', methods: ['GET'])]
     public function mesTournois(EntityManagerInterface $entityManager): Response
     {
-        $user = $this->getUser(); // ✅ Récupérer l'utilisateur connecté
+        $user = $this->getUser();
 
         if (!$user) {
             $this->addFlash('danger', 'Vous devez être connecté pour voir vos tournois.');
             return $this->redirectToRoute('app_login');
         }
 
-        // ✅ Récupérer les tournois de l'utilisateur
         $tournois = $user->getTournoisInscrits();
 
         return $this->render('tournoi/mes_tournois.html.twig', [
             'tournois' => $tournois,
         ]);
     }
-
-    #[Route('/inscription/{id}', name: 'tournoi_inscription', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function inscription(Tournoi $tournoi, EntityManagerInterface $entityManager): Response
-    {
-        $user = $this->getUser();
-    
-        if (!$user) {
-            $this->addFlash('danger', 'Vous devez être connecté pour vous inscrire à un tournoi.');
-            return $this->redirectToRoute('app_login');
-        }
-    
-        // Vérifier si l'utilisateur fait partie d'une équipe
-        $equipe = $user->getEquipes()->first();
-        if (!$equipe) {
-            $this->addFlash('warning', 'Vous devez appartenir à une équipe pour vous inscrire à un tournoi.');
-            return $this->redirectToRoute('app_equipe_index');
-        }
-    
-        // Vérifier si le tournoi est "À venir"
-        if ($tournoi->getStatus() !== 'À venir') {
-            $this->addFlash('danger', 'Vous ne pouvez vous inscrire qu\'à un tournoi "À venir".');
-            return $this->redirectToRoute('tournois_list');
-        }
-    
-        // Vérifier si l'équipe est déjà inscrite
-        if ($tournoi->getEquipes()->contains($equipe)) {
-            $this->addFlash('warning', 'Votre équipe est déjà inscrite à ce tournoi.');
-            return $this->redirectToRoute('mes_tournois');
-        }
-    
-        // Inscription de l'équipe au tournoi
-        $tournoi->addEquipe($equipe);
-        $entityManager->persist($tournoi);
-        $entityManager->flush();
-    
-        $this->addFlash('success', 'Votre équipe est inscrite au tournoi ' . $tournoi->getNom() . ' avec succès.');
-        return $this->redirectToRoute('mes_tournois');
-    }
-    
-
-    #[Route('/tournoi/{id}/generate-matches', name: 'tournoi_generate_matches')]
-public function generateMatches(Tournoi $tournoi, EntityManagerInterface $entityManager): Response
-{
-    // Récupérer les équipes inscrites
-    $equipes = $tournoi->getEquipes();
-
-    if (count($equipes) < 2) {
-        $this->addFlash('warning', 'Il faut au moins 2 équipes pour générer des matchs.');
-        return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
-    }
-
-    // Mélanger les équipes pour un tirage au sort aléatoire
-    $equipesArray = $equipes->toArray();
-    shuffle($equipesArray);
-
-    // Générer les matchs (tour par tour)
-    $nbEquipes = count($equipesArray);
-    for ($i = 0; $i < $nbEquipes; $i += 2) {
-        if (isset($equipesArray[$i + 1])) {
-            $match = new Game();
-            $match->setTournoi($tournoi);
-            $match->setEquipeA($equipesArray[$i]);
-            $match->setEquipeB($equipesArray[$i + 1]);
-            $entityManager->persist($match);
-        }
-    }
-
-    $entityManager->flush();
-
-    $this->addFlash('success', 'Les matchs ont été générés avec succès !');
-    return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
-}
-
-
-    #[Route('/desinscription/{id}', name: 'tournoi_desinscription', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function desinscription(Tournoi $tournoi, EntityManagerInterface $entityManager): Response
-    {
-        $user = $this->getUser();
-
-        if (!$user) {
-            $this->addFlash('danger', 'Vous devez être connecté pour vous désinscrire d\'un tournoi.');
-            return $this->redirectToRoute('app_login');
-        }
-
-        // Vérifier si l'utilisateur est bien inscrit
-        if (!$tournoi->getParticipants()->contains($user)) {
-            $this->addFlash('warning', 'Vous n\'êtes pas inscrit à ce tournoi.');
-            return $this->redirectToRoute('mes_tournois');
-        }
-
-        // ✅ Supprimer l'utilisateur du tournoi et inversement
-        $tournoi->removeParticipant($user);
-        $user->removeTournoiInscrit($tournoi);
-
-        // ✅ Enregistrer uniquement l'utilisateur (pas besoin de persister le tournoi)
-        $entityManager->persist($user);
-        $entityManager->flush();
-
-        $this->addFlash('success', 'Vous êtes désinscrit du tournoi.');
-
-        return $this->redirectToRoute('mes_tournois');
-    }
-
-    #[Route('/{id}/bracket', name: 'tournoi_bracket', methods: ['GET'])]
-    public function bracket(Tournoi $tournoi): Response
-    {
-        return $this->render('tournoi/bracket.html.twig', [
-            'tournoi' => $tournoi,
-        ]);
-    }
-
 }

@@ -13,6 +13,13 @@
         {% else %}
             <div class="row">
                 {% for equipe in equipes %}
+                    {% set alreadyInTournament = false %}
+                    {% for userEquipe in app.user.getEquipes() %}
+                        {% if userEquipe.tournoi == equipe.tournoi %}
+                            {% set alreadyInTournament = true %}
+                        {% endif %}
+                    {% endfor %}
+
                     <div class="col-md-4">
                         <div class="card mb-3">
                             <div class="card-body">
@@ -21,9 +28,24 @@
                                     <strong>Tournoi :</strong> {{ equipe.tournoi.nom }}<br>
                                     <strong>Membres :</strong> {{ equipe.getMembres|length }}
                                 </p>
+
                                 <a href="{{ path('app_equipe_show', {'id': equipe.id}) }}" class="btn btn-primary">
-                                    Voir l'équipe
+                                    👀 Voir l'équipe
                                 </a>
+
+                                {% if app.user %}
+                                    {% if alreadyInTournament %}
+                                        <p class="text-danger mt-2">⚠️ Vous êtes déjà dans une équipe de ce tournoi.</p>
+                                    {% else %}
+                                        <form action="{{ path('equipe_rejoindre', { 'id': equipe.id }) }}" method="POST" class="d-inline">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('rejoindre_equipe_' ~ equipe.id) }}">
+                                            <button type="submit" class="btn btn-success btn-sm">
+                                                ➕ Rejoindre l'équipe
+                                            </button>
+                                        </form>
+
+                                    {% endif %}
+                                {% endif %}
                             </div>
                         </div>
                     </div>
