@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon Profil{% endblock %}
+
+{% block body %}
+    <h2>Mon Profil</h2>
+    <ul>
+        <li>Nom: {{ user.nom }}</li>
+        <li>Prénom: {{ user.prenom }}</li>
+        <li>Email: {{ user.email }}</li>
+    </ul>
+    <a href="{{ path('profil_edit') }}" class="btn btn-primary">Modifier mon profil</a>
+{% endblock %}

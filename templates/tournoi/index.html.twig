@@ -3,17 +3,19 @@
 {% block title %}Liste des Tournois{% endblock %}
 
 {% block body %}
-    <div class="container mt-5">
-        <h1>Tournois disponibles</h1>
-        <ul>
-            {% for tournoi in tournois %}
-                <li>
-                    <a href="{{ path('tournoi_show', { id: tournoi.id }) }}">{{ tournoi.nom }}</a>
-                    (Début : {{ tournoi.dateDebut|date('d/m/Y') }})
-                </li>
-            {% else %}
-                <li>Aucun tournoi disponible.</li>
-            {% endfor %}
-        </ul>
-    </div>
+    <h2>Tournois</h2>
+    <form method="get" action="{{ path('tournois_list') }}">
+        <select name="status" onchange="this.form.submit()">
+            <option value="Tous" {% if status == 'Tous' %}selected{% endif %}>Tous</option>
+            <option value="À venir" {% if status == 'À venir' %}selected{% endif %}>À venir</option>
+            <option value="En cours" {% if status == 'En cours' %}selected{% endif %}>En cours</option>
+            <option value="Terminé" {% if status == 'Terminé' %}selected{% endif %}>Terminé</option>
+        </select>
+    </form>
+    
+    <ul>
+        {% for tournoi in tournois %}
+            <li>{{ tournoi.nom }} - {{ tournoi.status }}</li>
+        {% endfor %}
+    </ul>
 {% endblock %}
