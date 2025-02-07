@@ -68,110 +68,119 @@ final class GameController extends AbstractController
     }
 
     #[Route('/{id}/generate-next-round', name: 'generate_next_round', methods: ['GET'])]
-    public function generateNextRound(Tournoi $tournoi, EntityManagerInterface $entityManager, GameRepository $gameRepository): Response
-    {
-        // Vérifier si tous les matchs du tour précédent sont terminés
-        $matches = $gameRepository->findBy(['tournoi' => $tournoi, 'vainqueur' => null]);
-        if (count($matches) > 0) {
-            $this->addFlash('warning', 'Tous les matchs du tour actuel doivent être terminés avant de générer le prochain tour.');
-            return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
-        }
-
-        // Récupérer les vainqueurs du tour précédent
-        $winners = [];
-        foreach ($tournoi->getGames() as $match) {
-            if ($match->getVainqueur()) {
-                $winners[] = $match->getVainqueur();
-            }
-        }
-
-        if (count($winners) < 2) {
-            $this->addFlash('success', '🏆 Le tournoi est terminé ! Vainqueur : ' . $winners[0]->getNom());
-            return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
-        }
-
-        // Mélanger les vainqueurs et générer les matchs du prochain tour
-        $winners = array_values($winners);
-        shuffle($winners);
-        for ($i = 0; $i < count($winners) - 1; $i += 2) {
-            $game = new Game();
-            $game->setEquipeA($winners[$i]);
-            $game->setEquipeB($winners[$i + 1]);
-            $game->setTournoi($tournoi);
-            $entityManager->persist($game);
-        }
-
-        // Gérer le cas d’une équipe qualifiée d’office
-        if (count($winners) % 2 === 1) {
-            $qualifiedTeam = end($winners);
-            $this->addFlash('info', "L'équipe {$qualifiedTeam->getNom()} est qualifiée automatiquement pour le prochain tour.");
-        }
-
-        $entityManager->flush();
-        $this->addFlash('success', 'Le prochain tour a été généré avec succès.');
+public function generateNextRound(Tournoi $tournoi, EntityManagerInterface $entityManager, GameRepository $gameRepository): Response
+{
+    // 🔎 Vérifier si tous les matchs du tour précédent sont terminés
+    $matches = $gameRepository->findBy(['tournoi' => $tournoi, 'vainqueur' => null]);
+    if (count($matches) > 0) {
+        $this->addFlash('warning', 'Tous les matchs du tour actuel doivent être terminés avant de générer le prochain tour.');
         return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
     }
 
-    #[Route('/{id}/generate-final', name: 'generate_final_tournament', methods: ['GET'])]
-    public function generateFinalTournament(Tournoi $tournoi, EntityManagerInterface $entityManager, GameRepository $gameRepository): Response
-    {
-        // Vérifier si le tournoi a déjà un tournoi final
-        if ($tournoi->getParentTournoi() !== null) {
-            $this->addFlash('warning', 'Ce tournoi est déjà un tournoi final.');
-            return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
+    // 🔎 Récupérer les vainqueurs du tour précédent
+    $winners = [];
+    foreach ($tournoi->getGames() as $match) {
+        if ($match->getVainqueur()) {
+            $winners[] = $match->getVainqueur();
         }
+    }
 
-        // Récupérer les vainqueurs des sous-tournois
-        $winners = [];
-        foreach ($tournoi->getGames() as $match) {
-            if ($match->getVainqueur()) {
-                $winners[] = $match->getVainqueur();
-            }
+    // ❌ Vérifier qu'il y a bien des vainqueurs
+    if (count($winners) < 2) {
+        $this->addFlash('success', '🏆 Le tournoi est terminé ! Vainqueur : ' . $winners[0]->getNom());
+        return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
+    }
+
+    // ✅ Mélanger les vainqueurs et générer les matchs du prochain tour
+    $winners = array_values($winners);
+    shuffle($winners);  // Mélanger les vainqueurs pour générer de nouveaux matchs
+    $newMatches = [];
+
+    for ($i = 0; $i < count($winners) - 1; $i += 2) {
+        $game = new Game();
+        $game->setEquipeA($winners[$i]);
+        $game->setEquipeB($winners[$i + 1]);
+        $game->setTournoi($tournoi);
+        $entityManager->persist($game);
+        $newMatches[] = $game;
+    }
+
+    // 🔄 Si un nombre impair d'équipes, une équipe est qualifiée d'office
+    if (count($winners) % 2 === 1) {
+        $qualifiedTeam = end($winners);
+        $this->addFlash('info', "L'équipe {$qualifiedTeam->getNom()} est qualifiée automatiquement pour le prochain tour.");
+    }
+
+    // 🔥 Sauvegarde en base et mise à jour du statut du tournoi
+    $entityManager->flush();
+    $this->addFlash('success', 'Le prochain tour a été généré avec succès.');
+
+    return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
+}
+
+
+#[Route('/{id}/generate-final', name: 'generate_final_tournament', methods: ['GET'])]
+public function generateFinalTournament(Tournoi $tournoi, EntityManagerInterface $entityManager, GameRepository $gameRepository): Response
+{
+    // Vérifie si le tournoi a déjà un tournoi final
+    if ($tournoi->getParentTournoi() !== null) {
+        $this->addFlash('warning', 'Ce tournoi est déjà un tournoi final.');
+        return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
+    }
+
+    // Récupère les vainqueurs des matchs du tournoi actuel
+    $winners = [];
+    foreach ($tournoi->getGames() as $match) {
+        if ($match->getVainqueur()) {
+            $winners[] = $match->getVainqueur();
         }
+    }
 
-        if (count($winners) < 2) {
-            $this->addFlash('warning', 'Pas assez d’équipes qualifiées pour un tournoi final.');
-            return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
-        }
+    if (count($winners) < 2) {
+        $this->addFlash('warning', 'Pas assez d’équipes qualifiées pour un tournoi final.');
+        return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
+    }
 
-        // Création du tournoi final
-        $finalTournoi = new Tournoi();
-        $finalTournoi->setNom('🏆 Tournoi Final - ' . $tournoi->getNom());
-        $finalTournoi->setDateDebut(new \DateTimeImmutable());
-        $finalTournoi->setDateFin(new \DateTimeImmutable('+7 days'));
-        $finalTournoi->setStatus('En cours');
-        $finalTournoi->setNbMaxEquipes(count($winners));
-        $finalTournoi->setParentTournoi($tournoi);
+    // Création du tournoi final
+    $finalTournoi = new Tournoi();
+    $finalTournoi->setNom('🏆 Tournoi Final - ' . $tournoi->getNom());
+    $finalTournoi->setDateDebut(new \DateTimeImmutable());
+    $finalTournoi->setDateFin(new \DateTimeImmutable('+7 days'));
+    $finalTournoi->setStatus('En cours');
+    $finalTournoi->setNbMaxEquipes(count($winners));
+    $finalTournoi->setParentTournoi($tournoi);
 
-        foreach ($winners as $winner) {
-            $finalTournoi->addParticipant($winner);
-        }
+    foreach ($winners as $winner) {
+        $finalTournoi->addParticipant($winner);
+    }
 
-        $entityManager->persist($finalTournoi);
+    $entityManager->persist($finalTournoi);
+    $entityManager->flush();
+
+    $this->addFlash('success', '🏆 Le tournoi final a été créé avec succès !');
+    return $this->redirectToRoute('tournoi_show', ['id' => $finalTournoi->getId()]);
+}
+
+#[Route('/update-score', name: 'update_score', methods: ['POST'])]
+public function updateScore(Request $request, EntityManagerInterface $entityManager)
+{
+    // Logique pour traiter la mise à jour des scores via AJAX
+    $data = json_decode($request->getContent(), true);
+    $matchId = $data['matchId'];
+    $scoreEquipeA = $data['scoreEquipeA'];
+    $scoreEquipeB = $data['scoreEquipeB'];
+
+    $game = $entityManager->getRepository(Game::class)->find($matchId);
+    if ($game) {
+        $game->setScoreEquipeA($scoreEquipeA);
+        $game->setScoreEquipeB($scoreEquipeB);
         $entityManager->flush();
-
-        $this->addFlash('success', '🏆 Le tournoi final a été créé avec succès !');
-        return $this->redirectToRoute('tournoi_show', ['id' => $finalTournoi->getId()]);
+        return $this->json(['success' => true]);
     }
 
-    #[Route('/update-score', name: 'update_score', methods: ['POST'])]
-    public function updateScore(Request $request, EntityManagerInterface $entityManager)
-    {
-        $data = json_decode($request->getContent(), true);
-        $matchId = $data['matchId'];
-        $scoreEquipeA = $data['scoreEquipeA'];
-        $scoreEquipeB = $data['scoreEquipeB'];
+    return $this->json(['success' => false], 400);
+}
 
-        $game = $entityManager->getRepository(Game::class)->find($matchId);
-        if ($game) {
-            $game->setScoreEquipeA($scoreEquipeA);
-            $game->setScoreEquipeB($scoreEquipeB);
-            $entityManager->flush();
-            return $this->json(['success' => true]);
-        }
-
-        return $this->json(['success' => false], 400);
-    }
 
     #[Route('/bracket/{id}', name: 'app_game_bracket', methods: ['GET'])]
     public function bracket(Tournoi $tournoi, GameRepository $gameRepository): Response

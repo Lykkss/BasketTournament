@@ -69,34 +69,71 @@ class TournoiController extends AbstractController
     public function inscription(Tournoi $tournoi, EntityManagerInterface $entityManager): Response
     {
         $user = $this->getUser();
-
+    
         if (!$user) {
             $this->addFlash('danger', 'Vous devez être connecté pour vous inscrire.');
             return $this->redirectToRoute('app_login');
         }
-
+    
+        // Vérification si l'utilisateur est déjà inscrit dans le tournoi
         if ($tournoi->getParticipants()->contains($user)) {
             $this->addFlash('warning', 'Vous êtes déjà inscrit à ce tournoi.');
             return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
         }
-
+    
+        // Vérification si le tournoi est encore en inscription
         if ($tournoi->getStatus() !== 'À venir') {
             $this->addFlash('danger', 'L\'inscription est fermée.');
             return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
         }
-
+    
+        // Vérification si le tournoi a déjà atteint sa limite d'inscriptions
         if (count($tournoi->getParticipants()) >= $tournoi->getNbMaxEquipes()) {
             $this->addFlash('danger', 'Le tournoi est complet.');
             return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
         }
-
+    
+        // Vérifier si l'utilisateur est déjà inscrit dans une équipe de ce tournoi
+        $userHasTeamInTournament = false;
+        foreach ($tournoi->getEquipes() as $equipe) {
+            if ($equipe->getMembres()->contains($user)) {
+                $userHasTeamInTournament = true;
+                break;
+            }
+        }
+    
+        // Si l'utilisateur est déjà inscrit dans une équipe, ne pas permettre l'inscription
+        if ($userHasTeamInTournament) {
+            $this->addFlash('danger', 'Vous êtes déjà inscrit dans une équipe pour ce tournoi.');
+            return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
+        }
+    
+        // Ajouter l'utilisateur aux participants du tournoi
         $tournoi->addParticipant($user);
         $entityManager->persist($tournoi);
         $entityManager->flush();
-
+    
         $this->addFlash('success', 'Vous êtes inscrit au tournoi.');
         return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
     }
+    
+    #[Route('/tournoi/{id}/desinscription', name: 'tournoi_desinscription', methods: ['POST'])]
+public function desinscription(Tournoi $tournoi, EntityManagerInterface $entityManager): Response
+{
+    $user = $this->getUser(); // Récupère l'utilisateur connecté
+
+    // Vérifie si l'utilisateur est inscrit
+    if ($tournoi->getParticipants()->contains($user)) {
+        $tournoi->removeParticipant($user);
+        $entityManager->flush();
+        $this->addFlash('success', 'Vous vous êtes désinscrit du tournoi avec succès.');
+    } else {
+        $this->addFlash('warning', 'Vous n\'êtes pas inscrit à ce tournoi.');
+    }
+
+    return $this->redirectToRoute('tournoi_show', ['id' => $tournoi->getId()]);
+}
+
 
     #[Route('/{id}/generate-matches', name: 'tournoi_generate_matches', methods: ['GET'])]
     public function generateMatches(Tournoi $tournoi, EntityManagerInterface $entityManager): Response

@@ -16,10 +16,12 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 class AdminDashboardController extends AbstractDashboardController
 {
     #[Route('/admin', name: 'admin_dashboard')]
+    #[IsGranted('ROLE_ADMIN')]
     public function index(): Response
     {
         $adminUrlGenerator = $this->container->get(AdminUrlGenerator::class);
         return $this->redirect($adminUrlGenerator->setController(TournoiCrudController::class)->generateUrl());
+        return $this->render('admin/dashboard.html.twig');
     }
 
     public function configureDashboard(): Dashboard
