@@ -58,6 +58,11 @@ class Tournoi
         $this->sousTournois = new ArrayCollection();
         $this->equipes = new ArrayCollection(); // ✅ Correction pour éviter l'erreur de mapping
     }
+    
+    public function __toString(): string
+    {
+        return $this->nom; // ✅ Retourne le nom du tournoi pour l'affichage dans EasyAdmin
+    }
 
     public function getId(): ?int
     {

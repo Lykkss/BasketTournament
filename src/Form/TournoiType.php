@@ -35,10 +35,10 @@ class TournoiType extends AbstractType
                     'Terminé' => 'Terminé',
                 ],
             ])
-            ->add('nbMaxEquipes', IntegerType::class, [ // ✅ Ajout du champ obligatoire
+            ->add('nbMaxEquipes', IntegerType::class, [
                 'label' => 'Nombre maximum d\'équipes',
                 'required' => true, 
-                'attr' => ['min' => 2], // Minimum 2 équipes
+                'attr' => ['min' => 2], 
             ]);
     }
 
