@@ -1,5 +1,19 @@
-{% extends '@EasyAdmin/layout.html.twig' %}
+{% extends 'base.html.twig' %}
 
-{% block content %}
-    <h1>🏀 Bienvenue sur le Dashboard Admin</h1>
+{% block title %}Dashboard Admin{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h2>📊 Tableau de bord de l'Admin</h2>
+        <p>Bienvenue dans le tableau de bord où vous pouvez gérer les tournois, les équipes, etc.</p>
+        <p>Pour aller sur le dashboard de l'admin</p> 
+        <a href="{{ path('admin_dashboard') }}" class="btn btn-info">Dashboard Admin</a>
+
+        
+        <!-- Ajouter des liens vers différentes fonctionnalités admin -->
+        <a href="{{ path('tournois_list') }}" class="btn btn-primary">Gérer les Tournois</a>
+        <a href="{{ path('app_equipe_index') }}" class="btn btn-secondary">Gérer les Équipes</a>
+        <a href="{{ path('admin_dashboard') }}" class="btn btn-info">Gérer les Utilisateurs</a>  {# Remplace cette route par la bonne route admin des utilisateurs #}
+
+    </div>
 {% endblock %}
